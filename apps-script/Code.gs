@@ -10,25 +10,37 @@
 // ---------- Punto de entrada HTTP ----------
 
 function doPost(e) {
-  let payload;
   try {
-    // El PWA manda Content-Type: text/plain a propósito (ver README del
-    // frontend) para evitar el preflight CORS que Apps Script no maneja
-    // bien. El body sigue siendo JSON de todas formas.
-    payload = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return jsonResponse({ result: "ERROR", reason: "BAD_REQUEST" });
+    let payload;
+    try {
+      payload = JSON.parse(e.postData.contents);
+    } catch (err) {
+      return jsonResponse({ result: "ERROR", reason: "BAD_REQUEST" });
+    }
+
+    const token = (payload.token || "").toString().trim();
+    const deviceId = (payload.device_id || "").toString().trim();
+
+    if (!token || token.length < 6 || !deviceId) {
+      return jsonResponse({ result: "ERROR", reason: "BAD_REQUEST" });
+    }
+
+    const result = validateAndRegister(token, deviceId);
+    return jsonResponse(result);
+
+  } catch (globalErr) {
+    // Si algo falla internamente (hoja no encontrada, constante indefinida, etc.)
+    // atrapamos el error aquí para que Apps Script SIEMPRE responda con JSON y no de CORS.
+    return jsonResponse({ 
+      result: "ERROR", 
+      reason: "SERVER_EXCEPTION: " + globalErr.toString() 
+    });
   }
+}
 
-  const token = (payload.token || "").toString().trim();
-  const deviceId = (payload.device_id || "").toString().trim();
-
-  if (!token || token.length < 6 || !deviceId) {
-    return jsonResponse({ result: "ERROR", reason: "BAD_REQUEST" });
-  }
-
-  const result = validateAndRegister(token, deviceId);
-  return jsonResponse(result);
+function doGet(e) {
+  return ContentService.createTextOutput("API activa")
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 function jsonResponse(obj) {
@@ -37,7 +49,7 @@ function jsonResponse(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ---------- Lógica principal (pseudocódigo de la sección 8 del plan) ----------
+// ---------- Lógica principal ----------
 
 function validateAndRegister(token, deviceId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();

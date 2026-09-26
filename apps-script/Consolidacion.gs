@@ -25,20 +25,16 @@
 // Ajusta estos nombres EXACTOS a las pestañas de respuestas que Google Forms
 // crea automáticamente en el Sheet maestro (Anexo A del plan).
 const RAW_SHEET_SOURCE = {
-  "FORM_01_RAW": "FORM-01",
+  "Respuestas de formulario 1": "FORM-01",
   "FORM_02_RAW": "FORM-02",
   "FORM_03_RAW": "FORM-03",
 };
 
-// Pendiente de la decisión #16 del plan: "¿cuáles son exactamente las
-// columnas de cada Form?". Ajusta cada lista con el TEXTO EXACTO de la
-// pregunta tal como aparece en el Form (puede variar entre los 3, por eso
-// es una lista de alternativas, no un solo valor).
 const FIELD_MAP = {
-  full_name: ["Nombre completo", "Nombre y apellidos", "Nombre"],
+  full_name: ["Nombre", "Nombre completo", "Nombre y apellidos"],
   email: ["Correo electrónico", "Correo", "Email institucional"],
   institution: ["Institución", "Universidad / Institución", "Institución de procedencia"],
-  state_country: ["Estado y país de procedencia", "Procedencia", "Estado / País"],
+  country: ["País de procedencia", "Estado y país de procedencia", "Procedencia", "Estado / País"],
   payment_proof: ["Comprobante de pago", "Sube tu comprobante de pago", "Comprobante de pago (imagen o PDF)"],
 };
 
@@ -85,10 +81,6 @@ function upsertParticipant(answers, sourceForm) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.PARTICIPANTES);
   const isComplete = !!(answers.full_name && answers.email);
-  // Ver "Regla de negocio" arriba: comprobante presente == pago procesado.
-  // Si por algún motivo el comprobante no llegó (p. ej. FIELD_MAP
-  // desactualizado respecto al Form real), cae a PENDING por seguridad
-  // en vez de asumir el pago.
   const paymentStatus = answers.payment_proof ? "PAID" : "PENDING";
   const now = new Date();
 
@@ -123,7 +115,7 @@ function upsertParticipant(answers, sourceForm) {
         answers.full_name || "",
         answers.email,
         answers.institution || "",
-        answers.state_country || "",
+        answers.country || "",
         isComplete ? "COMPLETE" : "INCOMPLETE",
         paymentStatus,
         answers.payment_proof || "",
