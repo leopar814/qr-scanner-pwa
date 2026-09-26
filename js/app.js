@@ -31,6 +31,7 @@ let scanning = false;
 let rafId = null;
 let lastToken = null;
 let stream = null;
+let autoRescanTimer = null; // Temporizador para el reinicio automático del escáner
 
 // ---------- Arranque ----------
 
@@ -284,6 +285,7 @@ function renderResult(data) {
     state = STATES.ERROR;
   }
 
+  showScreen("result");
   els.resultScreen.classList.add(state.cls);
   els.resultTitle.textContent = state.title;
   els.resultSubtitle.textContent = state.subtitle;
@@ -291,7 +293,13 @@ function renderResult(data) {
   els.resultName.classList.toggle("hidden", !name);
   els.retryBtn.classList.toggle("hidden", result !== "ERROR");
 
-  showScreen("result");
+  // Si la entrada fue exitosa, regresar automáticamente al escáner tras 3 segundos
+  if (state.cls === "state-success") {
+    autoRescanTimer = setTimeout(() => {
+      showScreen("scan");
+      startCamera();
+    }, 3000);
+  }
 }
 
 function registerServiceWorker() {
