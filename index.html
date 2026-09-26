@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Control de Acceso — Congreso de Medicina</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Pantalla 1: configuración inicial (device_id + URL del API) -->
+  <section id="setup-screen" class="screen setup">
+    <form id="setup-form" class="setup-card">
+      <h1>Configurar terminal</h1>
+      <p class="setup-help">Esta configuración se guarda en el dispositivo. Cada Android debe usar un device_id distinto.</p>
+
+      <label for="device-select">Dispositivo</label>
+      <select id="device-select" required></select>
+
+      <label for="api-url-input">URL del servicio (Apps Script)</label>
+      <input id="api-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" required />
+
+      <button type="submit">Guardar y continuar</button>
+    </form>
+  </section>
+
+  <!-- Pantalla 2: escaneo -->
+  <section id="scan-screen" class="screen scan hidden">
+    <header class="topbar">
+      <span id="connection-badge" class="badge">EN LÍNEA</span>
+      <span id="device-badge" class="badge device">AND-0X</span>
+      <button id="config-btn" class="icon-btn" aria-label="Configuración" title="Configuración">⚙︎</button>
+    </header>
+
+    <div class="camera-wrap">
+      <video id="camera-feed" playsinline muted></video>
+      <canvas id="scan-canvas" class="hidden"></canvas>
+      <div class="scan-frame"></div>
+    </div>
+
+    <p id="scan-hint" class="scan-hint">Apunta la cámara al código QR del gafete</p>
+  </section>
+
+  <!-- Pantalla 3: resultado (pantalla completa, verde/rojo/ámbar) -->
+  <section id="result-screen" class="screen result hidden">
+    <div id="result-icon" class="result-icon"></div>
+    <h1 id="result-title" class="result-title"></h1>
+    <p id="result-name" class="result-name"></p>
+    <p id="result-subtitle" class="result-subtitle"></p>
+
+    <div class="result-actions">
+      <button id="retry-btn" class="secondary hidden">Reintentar</button>
+      <button id="rescan-btn" class="primary">Reiniciar escaneo</button>
+    </div>
+  </section>
+
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
