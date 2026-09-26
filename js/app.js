@@ -285,21 +285,14 @@ function renderResult(data) {
     state = STATES.ERROR;
   }
 
-  showScreen("result");
-  els.resultScreen.classList.add(state.cls);
+  els.resultScreen.className = `result ${state.cls}`;
   els.resultTitle.textContent = state.title;
   els.resultSubtitle.textContent = state.subtitle;
   els.resultName.textContent = name;
   els.resultName.classList.toggle("hidden", !name);
   els.retryBtn.classList.toggle("hidden", result !== "ERROR");
 
-  // Si la entrada fue exitosa, regresar automáticamente al escáner tras 3 segundos
-  if (state.cls === "state-success") {
-    autoRescanTimer = setTimeout(() => {
-      showScreen("scan");
-      startCamera();
-    }, 3000);
-  }
+  showScreen("result");
 }
 
 function registerServiceWorker() {
