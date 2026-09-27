@@ -16,6 +16,7 @@ const els = {
   deviceBadge: document.getElementById("device-badge"),
   scanHint: document.getElementById("scan-hint"),
   configBtn: document.getElementById("config-btn"),
+  toggleCamBtn: document.getElementById("toggle-cam-btn"),
 
   resultIcon: document.getElementById("result-icon"),
   resultTitle: document.getElementById("result-title"),
@@ -32,6 +33,7 @@ let rafId = null;
 let lastToken = null;
 let stream = null;
 let autoRescanTimer = null; // Temporizador para el reinicio automático del escáner
+let currentFacingMode = "user";
 
 // ---------- Arranque ----------
 
@@ -62,6 +64,11 @@ function init() {
     els.deviceSelect.value = getDeviceId();
     els.apiUrlInput.value = getApiUrl();
     showScreen("setup");
+  });
+  els.toggleCamBtn.addEventListener("click", () => {
+    stopCamera();
+    currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+    startCamera();
   });
   els.retryBtn.addEventListener("click", () => {
     if (lastToken) validateToken(lastToken);
@@ -124,10 +131,6 @@ function updateConnectionBadge() {
 // ---------- Cámara y escaneo ----------
 
 async function startCamera() {
-  // Si el script de jsQR (CDN) no cargó -por WiFi del venue, bloqueo de
-  // contenido, o falta de señal en ese instante- el escaneo fallaría en
-  // silencio en el primer cuadro. Lo detectamos aquí para dar un mensaje
-  // claro en vez de una cámara que "no hace nada".
   if (typeof jsQR !== "function") {
     els.scanHint.textContent =
       "No se pudo cargar el lector de QR (revisa la conexión). Reintentando…";
@@ -137,8 +140,15 @@ async function startCamera() {
   }
 
   try {
+    // Si la cámara es la frontal ('user'), invertimos el video horizontalmente con CSS
+    if (currentFacingMode === "user") {
+      els.video.style.transform = "scaleX(-1)";
+    } else {
+      els.video.style.transform = "none";
+    }
+
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
+      video: { facingMode: currentFacingMode },
     });
     els.video.srcObject = stream;
     await els.video.play();
