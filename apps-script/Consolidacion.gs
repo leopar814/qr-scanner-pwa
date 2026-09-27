@@ -25,17 +25,39 @@
 // Ajusta estos nombres EXACTOS a las pestañas de respuestas que Google Forms
 // crea automáticamente en el Sheet maestro (Anexo A del plan).
 const RAW_SHEET_SOURCE = {
-  "Respuestas de formulario 1": "FORM-01",
-  "FORM_02_RAW": "FORM-02",
-  "FORM_03_RAW": "FORM-03",
+  "Respuestas de formulario 1": "FORM-GENERAL",
+  "Respuestas de formulario 2": "FORM-ESTUDIANTES",
 };
 
+// Mapeo flexible de preguntas para consolidar ambos formularios
 const FIELD_MAP = {
-  full_name: ["Nombre", "Nombre completo", "Nombre y apellidos"],
-  email: ["Correo electrónico", "Correo", "Email institucional"],
-  institution: ["Institución", "Universidad / Institución", "Institución de procedencia"],
-  country: ["País de procedencia", "Estado y país de procedencia", "Procedencia", "Estado / País"],
-  payment_proof: ["Comprobante de pago", "Sube tu comprobante de pago", "Comprobante de pago (imagen o PDF)"],
+  first_name: ["Nombre(s):"],
+  last_name_p: ["Apellido Paterno:"],
+  last_name_m: ["Apellido Materno:"],
+  single_full_name: ["Nombre completo. Cuide que sea correcto por que asi aparecerá en su constancia."],
+  
+  email: [
+    "Dirección de correo electrónico",
+    "Escriba su correo Institucional",
+    "Correo electrónico. Favor de asegurarse que esté bien escrito, y que sea el que revise con mayor frecuencia, ya que ahi llegará la constancia correspondiente"
+  ],
+  
+  institution: [
+    "Universidad a la que pertence",
+    "Si seleccionó otra institución especifique ¿Cuál?"
+  ],
+  
+  country: ["Estado o País"],
+  student_id: ["Matrícula"],
+  section: ["Sección"],
+  campus: ["Mencione de que Campus Proviene"],
+  
+  payment_proof: [
+    'Comprobante con el motivo de pago: "PARTICIPACIÓN EN LA XXVI REUNIÓN NACIONAL DE MORFOLOGÍA, 2025":',
+    "Ficha de Pago"
+  ],
+  
+  bank_folio: ["Folio de la operación bancaria"],
 };
 
 /**
@@ -73,6 +95,16 @@ function extractAnswers(namedValues) {
       }
     }
   }
+
+  // Ensamblar el nombre completo según cuál formulario envió la respuesta
+  if (result.single_full_name) {
+    result.full_name = result.single_full_name;
+  } else if (result.first_name || result.last_name_p) {
+    result.full_name = [result.first_name, result.last_name_p, result.last_name_m]
+      .filter(Boolean)
+      .join(" ");
+  }
+
   if (result.email) result.email = result.email.toLowerCase();
   return result;
 }
@@ -116,9 +148,13 @@ function upsertParticipant(answers, sourceForm) {
         answers.email,
         answers.institution || "",
         answers.country || "",
+        answers.student_id || "",
+        answers.section || "",
+        answers.campus || "",
         isComplete ? "COMPLETE" : "INCOMPLETE",
         paymentStatus,
         answers.payment_proof || "",
+        answers.bank_folio || "",
         "PENDING", // badge_status
         sourceForm,
         now,
@@ -136,6 +172,7 @@ function upsertParticipant(answers, sourceForm) {
   // comprobante, se manda el gafete en el mismo ciclo — sin esperar al
   // trigger de tiempo. Si falla (red, cuota, etc.), badge_status se
   // queda en PENDING y processPendingBadges() lo reintenta después.
+  /*
   if (isEligibleForBadge(rowValuesAfterUpdate)) {
     try {
       issueBadge(sheet, rowIndex, rowValuesAfterUpdate);
@@ -143,6 +180,7 @@ function upsertParticipant(answers, sourceForm) {
       Logger.log("No se pudo emitir el gafete de inmediato para fila " + rowIndex + ": " + err);
     }
   }
+  */
 }
 
 function updateExistingParticipant(sheet, rowIndex, currentValues, answers, isComplete, paymentStatus, now) {
@@ -153,20 +191,29 @@ function updateExistingParticipant(sheet, rowIndex, currentValues, answers, isCo
 
   updated[COL_PARTICIPANTES.FULL_NAME] = answers.full_name || currentValues[COL_PARTICIPANTES.FULL_NAME];
   updated[COL_PARTICIPANTES.INSTITUTION] = answers.institution || currentValues[COL_PARTICIPANTES.INSTITUTION];
-  updated[COL_PARTICIPANTES.STATE_COUNTRY] = answers.state_country || currentValues[COL_PARTICIPANTES.STATE_COUNTRY];
+  updated[COL_PARTICIPANTES.STATE_COUNTRY] = answers.country || currentValues[COL_PARTICIPANTES.STATE_COUNTRY];
+  updated[COL_PARTICIPANTES.STUDENT_ID] = answers.student_id || currentValues[COL_PARTICIPANTES.STUDENT_ID];
+  updated[COL_PARTICIPANTES.SECTION] = answers.section || currentValues[COL_PARTICIPANTES.SECTION];
+  updated[COL_PARTICIPANTES.CAMPUS] = answers.campus || currentValues[COL_PARTICIPANTES.CAMPUS];
+
   if (isComplete) updated[COL_PARTICIPANTES.REGISTRATION_STATUS] = "COMPLETE";
   // Solo avanza payment_status hacia PAID; nunca lo regresa a PENDING con
   // una resubmisión rara que llegara sin comprobante.
   if (paymentStatus === "PAID") updated[COL_PARTICIPANTES.PAYMENT_STATUS] = "PAID";
   if (answers.payment_proof) updated[COL_PARTICIPANTES.PAYMENT_PROOF_URL] = answers.payment_proof;
+  if (answers.bank_folio) updated[COL_PARTICIPANTES.BANK_FOLIO] = answers.bank_folio;
   updated[COL_PARTICIPANTES.UPDATED_AT] = now;
 
   sheet.getRange(rowIndex, COL_PARTICIPANTES.FULL_NAME + 1).setValue(updated[COL_PARTICIPANTES.FULL_NAME]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.INSTITUTION + 1).setValue(updated[COL_PARTICIPANTES.INSTITUTION]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.STATE_COUNTRY + 1).setValue(updated[COL_PARTICIPANTES.STATE_COUNTRY]);
+  sheet.getRange(rowIndex, COL_PARTICIPANTES.STUDENT_ID + 1).setValue(updated[COL_PARTICIPANTES.STUDENT_ID]);
+  sheet.getRange(rowIndex, COL_PARTICIPANTES.SECTION + 1).setValue(updated[COL_PARTICIPANTES.SECTION]);
+  sheet.getRange(rowIndex, COL_PARTICIPANTES.CAMPUS + 1).setValue(updated[COL_PARTICIPANTES.CAMPUS]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.REGISTRATION_STATUS + 1).setValue(updated[COL_PARTICIPANTES.REGISTRATION_STATUS]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.PAYMENT_STATUS + 1).setValue(updated[COL_PARTICIPANTES.PAYMENT_STATUS]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.PAYMENT_PROOF_URL + 1).setValue(updated[COL_PARTICIPANTES.PAYMENT_PROOF_URL]);
+  sheet.getRange(rowIndex, COL_PARTICIPANTES.BANK_FOLIO + 1).setValue(updated[COL_PARTICIPANTES.BANK_FOLIO]);
   sheet.getRange(rowIndex, COL_PARTICIPANTES.UPDATED_AT + 1).setValue(now);
 
   return updated;

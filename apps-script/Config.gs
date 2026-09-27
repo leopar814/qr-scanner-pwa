@@ -19,13 +19,17 @@ const COL_PARTICIPANTES = {
   EMAIL: 3,
   INSTITUTION: 4,
   STATE_COUNTRY: 5,
-  REGISTRATION_STATUS: 6,
-  PAYMENT_STATUS: 7,
-  PAYMENT_PROOF_URL: 8, // URL del comprobante subido en el Form (auditoría)
-  BADGE_STATUS: 9,
-  SOURCE_FORM: 10,
-  CREATED_AT: 11,
-  UPDATED_AT: 12,
+  STUDENT_ID: 6,         // Matrícula (Formulario estudiantes)
+  SECTION: 7,            // Sección (Formulario estudiantes)
+  CAMPUS: 8,             // Campus (Formulario estudiantes)
+  REGISTRATION_STATUS: 9,
+  PAYMENT_STATUS: 10,
+  PAYMENT_PROOF_URL: 11, // Comprobante de pago (Drive URL)
+  BANK_FOLIO: 12,        // Folio de la operación bancaria
+  BADGE_STATUS: 13,
+  SOURCE_FORM: 14,
+  CREATED_AT: 15,
+  UPDATED_AT: 16,
 };
 
 const COL_ASISTENCIAS = {
