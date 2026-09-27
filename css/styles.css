@@ -140,31 +140,32 @@ html, body {
 
 /* ---------- Result (pantalla completa por color) ---------- */
 
-.result {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
+.result:not(.hidden) {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
 
-  padding: 32px 24px;
-  padding-top: max(32px, env(safe-area-inset-top));
-  padding-bottom: max(32px, env(safe-area-inset-bottom));
-  gap: 12px;
-
-  transition: background-color 0.15s ease;
+  padding: 24px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
 }
 
-.result.state-success { background: var(--success); }
-.result.state-error { background: var(--error); }
-.result.state-warning { background: var(--warning); }
+.result-icon:empty {
+  display: none !important;
+}
+
+.result.state-success { background-color: #16a34a !important; }
+.result.state-error { background-color: #dc2626 !important; }
+.result.state-warning { background-color: #d97706 !important; }
 
 .result-title {
   font-size: 2.2rem;
@@ -173,21 +174,21 @@ html, body {
   line-height: 1.15;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .result-name {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 8px 0;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .result-subtitle {
   font-size: 1.2rem;
   opacity: 0.95;
   margin: 0 0 16px;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .result-actions {
@@ -195,7 +196,6 @@ html, body {
   gap: 12px;
   width: 100%;
   max-width: 360px;
-  margin-top: 12px;
 }
 
 .result-actions button {
@@ -206,7 +206,6 @@ html, body {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
 .result-actions .primary {

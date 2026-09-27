@@ -105,9 +105,11 @@ function onSetupSubmit(e) {
 function showScreen(name) {
   els.setupScreen.classList.toggle("hidden", name !== "setup");
   els.scanScreen.classList.toggle("hidden", name !== "scan");
-  els.resultScreen.classList.toggle("hidden", name !== "result");
-  els.resultScreen.className = "screen"; // reset color state
-  if (name === "result") els.resultScreen.classList.add("visible");
+  if (name === "result") {
+    els.resultScreen.classList.remove("hidden");
+  } else {
+    els.resultScreen.classList.add("hidden");
+  }
 }
 
 // ---------- Conexión ----------
