@@ -50,12 +50,12 @@ function validarYRegistrarAsistencia_(folio, deviceId) {
     return { result: 'REJECTED', reason: 'UNKNOWN_TOKEN' };
   }
 
-  if (participante.values[COL_PARTICIPANTES.STATUS] === 'REVOKED') {
+  if (participante.status === 'REVOKED') {
     logScan_(ss, deviceId, folio, 'REJECTED', 'REVOKED', false);
     return { result: 'REJECTED', reason: 'REVOKED' };
   }
 
-  const fullName = participante.values[COL_PARTICIPANTES.FULL_NAME];
+  const fullName = participante.full_name;
   const today = todayString_();
 
   const lock = LockService.getScriptLock();
@@ -87,14 +87,13 @@ function validarYRegistrarAsistencia_(folio, deviceId) {
   return { result: result, full_name: fullName };
 }
 
-// Una sola lectura por request — igual que en el diseño original, para
-// no releer la hoja celda por celda en cada escaneo.
+// Antes: una lectura completa de la hoja en cada escaneo. Ahora: usa el
+// índice cacheado (CacheParticipantes.gs), que solo se reconstruye cuando
+// MaestroConsolidacion.gs avisa que algo cambió — no en cada escaneo.
 function buscarPorFolio_(sheet, folio) {
-  const values = sheet.getDataRange().getValues();
-  for (let row = 1; row < values.length; row++) {
-    if (values[row][COL_PARTICIPANTES.FOLIO] === folio) {
-      return { values: values[row] };
-    }
+  const index = getParticipantesIndexCached_(sheet);
+  for (let i = 0; i < index.length; i++) {
+    if (index[i].folio === folio) return index[i];
   }
   return null;
 }

@@ -52,6 +52,17 @@ const COL_SCAN_LOG = {
 
 const MASTER_LOCK_WAIT_MS = 5000;
 
+// Caché del índice de Participantes (folio -> full_name/status) para no
+// releer toda la hoja en cada escaneo. Se invalida por ESCRITURA, no por
+// tiempo: MaestroConsolidacion.gs la borra en el instante en que agrega
+// un participante nuevo, así que nunca hay una ventana en la que alguien
+// recién inscrito no sea encontrado. El TTL de abajo es solo una red de
+// seguridad (máximo permitido por CacheService), no el mecanismo real.
+const PARTICIPANTES_CACHE_META_KEY = 'participantes_cache_meta';
+const PARTICIPANTES_CACHE_CHUNK_PREFIX = 'participantes_chunk_';
+const PARTICIPANTES_CACHE_CHUNK_SIZE = 500; // filas por chunk — CacheService limita cada valor a 100 KB
+const PARTICIPANTES_CACHE_TTL_SECONDS = 21600; // 6 horas, el máximo que permite CacheService
+
 function getMasterSpreadsheet_() {
   return SpreadsheetApp.openById(MASTER_SPREADSHEET_ID);
 }

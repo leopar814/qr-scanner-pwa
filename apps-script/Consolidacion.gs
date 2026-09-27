@@ -58,4 +58,10 @@ function registrarEnMaestro_(fuente, d, folio) {
   } finally {
     lock.releaseLock();
   }
+
+   // Fuera del lock: invalida el caché que usa Validacion.gs para que el
+  // PRÓXIMO escaneo (de quien sea) reconstruya el índice con este
+  // participante ya incluido — sin esto, alguien podría intentar entrar
+  // segundos después de inscribirse y encontrar un caché desactualizado.
+  invalidateParticipantesCache_();
 }
