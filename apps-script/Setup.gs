@@ -1,51 +1,34 @@
 /**
- * Setup.gs
- * Ejecuta setupSheets() UNA SOLA VEZ, manualmente, para crear las hojas
- * y encabezados del registro maestro (Anexo A del plan). Es seguro
- * volver a correrla después: no borra datos existentes, solo crea lo
- * que falte y reescribe encabezados.
- *
- * Cómo ejecutarla (primera vez usando Apps Script):
- * 1. En el editor, arriba hay un desplegable de funciones junto al botón
- *    ▶ Ejecutar. Selecciona "setupSheets".
- * 2. Clic en ▶ Ejecutar.
- * 3. La primera vez aparecerá "Se requiere autorización" → Revisar permisos
- *    → elige la cuenta de Google que administra el Sheet maestro → Avanzado
- *    → "Ir a [nombre del proyecto] (no seguro)" → Permitir.
- *    (El aviso "no seguro" es normal: aparece porque el proyecto es tuyo y
- *    no ha sido revisado por Google, no porque tenga un problema real.)
- * 4. Revisa el Sheet: deben aparecer las pestañas PARTICIPANTES,
- *    ASISTENCIAS y SCAN_LOG con sus encabezados en la fila 1.
+ * MaestroSetup.gs
+ * Ejecuta setupHojasMaestras() UNA SOLA VEZ, manualmente, después de
+ * crear el Sheet "XXXI CNA PARTICIPANTES" y pegar su ID en
+ * MaestroConfig.gs. Es seguro volver a correrla: no borra datos, solo
+ * crea lo que falte.
  */
-function setupSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function setupHojasMaestras() {
+  const ss = getMasterSpreadsheet_();
 
-  createSheetWithHeaders(ss, SHEETS.PARTICIPANTES, [
-    "attendee_id", "access_token", "full_name", "email", "institution",
-    "state_country", "registration_status", "payment_status",
-    "payment_proof_url", "badge_status", "source_form", "created_at",
-    "updated_at",
+  asegurarHojaConEncabezados_(ss, MASTER_SHEETS.PARTICIPANTES, [
+    'folio', 'full_name', 'email', 'categoria', 'sector', 'source_form',
+    'comprobante_url', 'badge_status', 'status', 'created_at', 'updated_at',
   ]);
 
-  const asistencias = createSheetWithHeaders(ss, SHEETS.ASISTENCIAS, [
-    "attendee_id", "attendance_date", "first_scan_at", "device_id",
-    "verification_state",
+  const asistencias = asegurarHojaConEncabezados_(ss, MASTER_SHEETS.ASISTENCIAS, [
+    'folio', 'attendance_date', 'first_scan_at', 'device_id', 'verification_state',
   ]);
-  // Evita que Sheets convierta "2026-09-29" en un objeto Date al escribir,
-  // lo cual rompería la comparación de cadenas en findAttendanceToday.
-  asistencias.getRange("B2:B").setNumberFormat("@");
+  // Evita que Sheets convierta "2026-09-29" en un objeto Date al escribir.
+  asistencias.getRange('B2:B').setNumberFormat('@');
 
-  createSheetWithHeaders(ss, SHEETS.SCAN_LOG, [
-    "timestamp", "device_id", "token", "attendee_id", "result", "reason",
-    "attendance_created", "operator_note",
+  asegurarHojaConEncabezados_(ss, MASTER_SHEETS.SCAN_LOG, [
+    'timestamp', 'device_id', 'folio', 'result', 'reason', 'attendance_created',
   ]);
 
-  SpreadsheetApp.getUi().alert("Hojas creadas/verificadas correctamente.");
+  SpreadsheetApp.getUi().alert('Hojas del spreadsheet maestro creadas/verificadas.');
 }
 
-function createSheetWithHeaders(ss, name, headers) {
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) sheet = ss.insertSheet(name);
+function asegurarHojaConEncabezados_(ss, nombre, headers) {
+  let sheet = ss.getSheetByName(nombre);
+  if (!sheet) sheet = ss.insertSheet(nombre);
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.setFrozenRows(1);
   return sheet;

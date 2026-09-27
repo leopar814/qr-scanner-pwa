@@ -1,39 +1,57 @@
 /**
- * Config.gs
- * Constantes compartidas entre Code.gs y Consolidacion.gs.
- * Si cambias el orden de columnas aquí, corre setupSheets() de nuevo
- * (o ajusta las hojas a mano) para que coincida.
+ * MaestroConfig.gs
+ * Constantes compartidas por MaestroSetup.gs, MaestroConsolidacion.gs y
+ * Validacion.gs — todo lo relacionado con el spreadsheet
+ * "XXXI CNA PARTICIPANTES".
  */
 
-const SHEETS = {
-  PARTICIPANTES: "PARTICIPANTES",
-  ASISTENCIAS: "ASISTENCIAS",
-  SCAN_LOG: "SCAN_LOG",
+// PENDIENTE: crea (o localiza) un Google Sheet llamado exactamente
+// "XXXI CNA PARTICIPANTES", ábrelo, y pega su ID aquí (está en la URL,
+// entre /d/ y /edit). Mismo patrón que SPREADSHEET_ID en Gafetes.gs.
+const MASTER_SPREADSHEET_ID = '';
+
+const MASTER_SHEETS = {
+  PARTICIPANTES: 'Participantes',
+  ASISTENCIAS: 'Asistencias',
+  SCAN_LOG: 'Scan_log',
 };
 
-// Índices de columna, base 0 (columna A = 0).
+// "folio" es el mismo valor que ya generan en Gafetes.gs (GEN-0001,
+// USEP-0001, etc.) y el mismo texto que se codifica en el QR — por eso
+// es la clave con la que se busca en la validación, no un token aparte.
 const COL_PARTICIPANTES = {
-  ATTENDEE_ID: 0,
-  ACCESS_TOKEN: 1,
-  FULL_NAME: 2,
-  EMAIL: 3,
-  INSTITUTION: 4,
-  STATE_COUNTRY: 5,
-  REGISTRATION_STATUS: 6,
-  PAYMENT_STATUS: 7,
-  PAYMENT_PROOF_URL: 8, // URL del comprobante subido en el Form (auditoría)
-  BADGE_STATUS: 9,
-  SOURCE_FORM: 10,
-  CREATED_AT: 11,
-  UPDATED_AT: 12,
+  FOLIO: 0,
+  FULL_NAME: 1,
+  EMAIL: 2,
+  CATEGORIA: 3,
+  SECTOR: 4,
+  SOURCE_FORM: 5,
+  COMPROBANTE_URL: 6,
+  BADGE_STATUS: 7,   // espejo de "Gafete enviado": ENVIADO / PENDIENTE / ERROR
+  STATUS: 8,         // ACTIVE / REVOKED — para poder anular un folio a mano
+  CREATED_AT: 9,
+  UPDATED_AT: 10,
 };
 
 const COL_ASISTENCIAS = {
-  ATTENDEE_ID: 0,
+  FOLIO: 0,
   ATTENDANCE_DATE: 1,
   FIRST_SCAN_AT: 2,
   DEVICE_ID: 3,
   VERIFICATION_STATE: 4,
 };
 
-const LOCK_WAIT_MS = 5000;
+const COL_SCAN_LOG = {
+  TIMESTAMP: 0,
+  DEVICE_ID: 1,
+  FOLIO: 2,
+  RESULT: 3,
+  REASON: 4,
+  ATTENDANCE_CREATED: 5,
+};
+
+const MASTER_LOCK_WAIT_MS = 5000;
+
+function getMasterSpreadsheet_() {
+  return SpreadsheetApp.openById(MASTER_SPREADSHEET_ID);
+}
