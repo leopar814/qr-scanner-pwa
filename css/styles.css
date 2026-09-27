@@ -223,3 +223,31 @@ html, body {
   .result-title { font-size: 1.5rem; }
   .result-name { font-size: 1.25rem; }
 }
+
+/* ---------- Text ---------- */
+
+/* Botón de texto para cambiar cámara */
+.text-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.text-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Estado activo cuando se presiona / interactúa */
+.text-btn.is-active {
+  background-color: #096e99; /* Azul brillante */
+  border-color: #38bdf8;
+  color: #0f172a; /* Texto oscuro para contraste */
+  transform: scale(0.92); /* Se contrae ligeramente */
+}

@@ -66,9 +66,14 @@ function init() {
     showScreen("setup");
   });
   els.toggleCamBtn.addEventListener("click", () => {
+    els.toggleCamBtn.classList.add("is-active");
     stopCamera();
     currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
     startCamera();
+
+    setTimeout(() => {
+      els.toggleCamBtn.classList.remove("is-active");
+    }, 150);
   });
   els.retryBtn.addEventListener("click", () => {
     if (lastToken) validateToken(lastToken);
