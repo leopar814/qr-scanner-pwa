@@ -10,7 +10,7 @@ function setupHojasMaestras() {
 
   asegurarHojaConEncabezados_(ss, MASTER_SHEETS.PARTICIPANTES, [
     'folio', 'full_name', 'email', 'categoria', 'sector', 'source_form',
-    'comprobante_url', 'badge_status', 'status', 'created_at', 'updated_at',
+    'comprobante_url', 'badge_status', 'status', 'created_at', 'updated_at', 'source_key', 'error_message',
   ]);
 
   const asistencias = asegurarHojaConEncabezados_(ss, MASTER_SHEETS.ASISTENCIAS, [

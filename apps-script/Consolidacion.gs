@@ -6,15 +6,13 @@
  * spreadsheet maestro "XXXI CNA PARTICIPANTES" — de ahí es de donde
  * Validacion.gs lee para el escaneo en la entrada.
  */
-function registrarEnMaestro_(fuente, d, folio) {
+function registrarEnMaestro_(fuente, d, folio, badgeStatus, errorMessage) {
   const ss = getMasterSpreadsheet_();
   const sheet = ss.getSheetByName(MASTER_SHEETS.PARTICIPANTES);
   const now = new Date();
+  const status = badgeStatus || 'ENVIADO';
+  const error = errorMessage || '';
 
-  // Lock propio (no el mismo LockService.getScriptLock() que usa
-  // Validacion.gs para asistencia — son secciones críticas distintas,
-  // pero LockService ya serializa correctamente aunque se pidan desde
-  // dos archivos distintos del mismo proyecto).
   const lock = LockService.getScriptLock();
   lock.waitLock(MASTER_LOCK_WAIT_MS);
 
@@ -30,38 +28,35 @@ function registrarEnMaestro_(fuente, d, folio) {
     }
 
     if (foundRow >= 0) {
-      // Ya existe (p. ej. se volvió a correr reprocesarTodo()) — solo
-      // refresca datos, no duplica la fila.
       const rowIndex = foundRow + 1;
-      sheet.getRange(rowIndex, COL_PARTICIPANTES.FULL_NAME + 1).setValue(d.nombre);
-      sheet.getRange(rowIndex, COL_PARTICIPANTES.EMAIL + 1).setValue(d.correo);
-      sheet.getRange(rowIndex, COL_PARTICIPANTES.CATEGORIA + 1).setValue(d.categoria);
-      sheet.getRange(rowIndex, COL_PARTICIPANTES.SECTOR + 1).setValue(d.sector);
-      sheet.getRange(rowIndex, COL_PARTICIPANTES.BADGE_STATUS + 1).setValue('ENVIADO');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.FULL_NAME + 1).setValue(d.nombre || '');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.EMAIL + 1).setValue(d.correo || '');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.CATEGORIA + 1).setValue(d.categoria || '');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.SECTOR + 1).setValue(d.sector || '');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.COMPROBANTE_URL + 1).setValue(d.comprobante || '');
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.BADGE_STATUS + 1).setValue(status);
+      sheet.getRange(rowIndex, COL_PARTICIPANTES.ERROR_MESSAGE + 1).setValue(error);
       sheet.getRange(rowIndex, COL_PARTICIPANTES.UPDATED_AT + 1).setValue(now);
-      return;
+    } else {
+      sheet.appendRow([
+        folio,
+        d.nombre || '',
+        d.correo || '',
+        d.categoria || '',
+        d.sector || '',
+        fuente.id,
+        d.comprobante || '',
+        status,
+        'ACTIVE',
+        now,
+        now,
+        '',
+        error,
+      ]);
     }
-
-    sheet.appendRow([
-      folio,
-      d.nombre,
-      d.correo,
-      d.categoria,
-      d.sector,
-      fuente.id,
-      d.comprobante || '',
-      'ENVIADO',
-      'ACTIVE',
-      now,
-      now,
-    ]);
   } finally {
     lock.releaseLock();
   }
 
-   // Fuera del lock: invalida el caché que usa Validacion.gs para que el
-  // PRÓXIMO escaneo (de quien sea) reconstruya el índice con este
-  // participante ya incluido — sin esto, alguien podría intentar entrar
-  // segundos después de inscribirse y encontrar un caché desactualizado.
   invalidateParticipantesCache_();
 }

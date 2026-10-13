@@ -22,7 +22,6 @@ const els = {
   resultTitle: document.getElementById("result-title"),
   resultName: document.getElementById("result-name"),
   resultSubtitle: document.getElementById("result-subtitle"),
-  retryBtn: document.getElementById("retry-btn"),
   rescanBtn: document.getElementById("rescan-btn"),
 };
 
@@ -74,9 +73,6 @@ function init() {
     setTimeout(() => {
       els.toggleCamBtn.classList.remove("is-active");
     }, 150);
-  });
-  els.retryBtn.addEventListener("click", () => {
-    if (lastToken) validateToken(lastToken);
   });
   els.rescanBtn.addEventListener("click", () => {
     showScreen("scan");
@@ -307,7 +303,6 @@ function renderResult(data) {
   els.resultSubtitle.textContent = state.subtitle;
   els.resultName.textContent = name;
   els.resultName.classList.toggle("hidden", !name);
-  els.retryBtn.classList.toggle("hidden", result !== "ERROR");
 
   showScreen("result");
 }

@@ -16,9 +16,9 @@ const MASTER_SHEETS = {
   SCAN_LOG: 'Scan_log',
 };
 
-// "folio" es el mismo valor que ya generan en Gafetes.gs (GEN-0001,
-// USEP-0001, etc.) y el mismo texto que se codifica en el QR — por eso
-// es la clave con la que se busca en la validación, no un token aparte.
+// El folio conserva el prefijo del formulario (GEN, USEP, BUAP) y usa
+// un UUID para evitar secuencias predecibles. El mismo folio se codifica
+// en el QR y se utiliza como clave de validación.
 const COL_PARTICIPANTES = {
   FOLIO: 0,
   FULL_NAME: 1,
@@ -31,6 +31,8 @@ const COL_PARTICIPANTES = {
   STATUS: 8,         // ACTIVE / REVOKED — para poder anular un folio a mano
   CREATED_AT: 9,
   UPDATED_AT: 10,
+  SOURCE_KEY: 11,      // spreadsheetId:fila; identifica el envío original
+  ERROR_MESSAGE: 12,   // último error de generación/envío, si existe
 };
 
 const COL_ASISTENCIAS = {

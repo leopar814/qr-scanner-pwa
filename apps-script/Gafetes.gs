@@ -7,7 +7,15 @@
  * USEP, BUAP) se genera su gafete (plantilla de Slides + QR de
  * quickchart.io), se manda en PDF por correo y se consolida en el
  * spreadsheet maestro (registrarEnMaestro_, en MaestroConsolidacion.gs).
+ * Cuando alguien envía cualquiera de los 3 formularios (Foráneos,
+ * USEP, BUAP) se genera su gafete (plantilla de Slides + QR de
+ * quickchart.io), se manda en PDF por correo y se consolida en el
+ * spreadsheet maestro (registrarEnMaestro_, en MaestroConsolidacion.gs).
  *
+ * La validación (doPost) y el pase de lista viven en Validacion.gs.
+ *
+ * REQUIERE el archivo LimpiarNombre.gs en el mismo proyecto
+ * (usa construirNombreCompleto_ y limpiarNombreCompleto_).
  * La validación (doPost) y el pase de lista viven en Validacion.gs.
  *
  * REQUIERE el archivo LimpiarNombre.gs en el mismo proyecto
@@ -25,9 +33,9 @@ const WEBAPP_URL = 'https://PENDIENTE-DE-PUBLICAR';
 const PLACEHOLDER_NOMBRE = '<<NOMBRE>>';
 const PLACEHOLDER_QR     = '<<QR>>';
 
-const COL_FOLIO   = 'Folio';
-const COL_SECTOR  = 'Sector de acceso';
-const COL_ENVIADO = 'Gafete enviado';
+// Las hojas de respuestas de Google Forms NO se modifican.
+// Folio, estado de envío y demás datos de control viven exclusivamente
+// en el spreadsheet maestro "Participantes".
 
 // ============================================================
 // FUENTES — una por cada formulario
@@ -35,6 +43,7 @@ const COL_ENVIADO = 'Gafete enviado';
 
 const FUENTES = [
   {
+    // Formulario general (foráneos)
     // Formulario general (foráneos)
     id: 'GENERAL',
     PREFIJO: 'GEN',
@@ -65,14 +74,17 @@ const FUENTES = [
         correo: (fila[idx['Dirección de correo electrónico']] || '').toString().trim(),
         categoria: categoria,
         sector: sector,
-        comprobante: (fila[idx['Comprobante con el motivo de pago: "PARTICIPACIÓN EN LA XXVI REUNIÓN NACIONAL DE MORFOLOGÍA, 2025": ']] || '').toString().trim(),
+        comprobante: (fila[idx['Comprobante con el motivo de pago: "PARTICIPACIÓN EN LA XXVI REUNIÓN NACIONAL DE MORFOLOGÍA, 2025":']] || '').toString().trim(),
       };
     },
   },
   {
     // Formulario USEP
+    // Formulario USEP
     id: 'USEP',
     PREFIJO: 'USEP',
+    SPREADSHEET_ID: '1ypM-Qcv2bj-_R96r-Lanuk0qlkRmujpOaOA1Vi823_A',
+    HOJA_NOMBRE: 'Respuestas de formulario 1',
     SPREADSHEET_ID: '1ypM-Qcv2bj-_R96r-Lanuk0qlkRmujpOaOA1Vi823_A',
     HOJA_NOMBRE: 'Respuestas de formulario 1',
     extraerDatos: function (fila, idx) {
@@ -98,6 +110,7 @@ const FUENTES = [
         correo: (fila[idx['Correo electrónico. Favor de asegurarse que esté bien escrito, y que sea el que revise con mayor frecuencia, ya que ahi llegará la constancia correspondiente']] || '').toString().trim(),
         categoria: 'ESTUDIANTE',
         sector: 'BUAP',
+        sector: 'BUAP',
         comprobante: (fila[idx['Ficha de Pago']] || '').toString().trim(),
       };
     },
@@ -107,10 +120,16 @@ const FUENTES = [
 // ============================================================
 // DISPARADOR INSTANTÁNEO — se activa solo al enviar cualquiera de
 // los formularios (ver instrucciones de instalación al final)
+// los formularios (ver instrucciones de instalación al final)
 // ============================================================
 
 function onFormSubmitHandler(e) {
   try {
+    if (!e || !e.range) {
+      Logger.log('Aviso: Esta función se ejecuta automáticamente al recibir un Formulario.');
+      return;
+    }
+
     if (!e || !e.range) {
       Logger.log('Aviso: Esta función se ejecuta automáticamente al recibir un Formulario.');
       return;
@@ -231,7 +250,22 @@ function asegurarColumnasDeControl(hoja) {
 // Apps Script corta cada ejecución a los 6 minutos, así que aquí se
 // detiene a los ~5 min: si quedan filas pendientes, vuelve a correrla
 // (las ya enviadas se saltan solas).
+// Manda gafete a TODA fila con comprobante que no diga ENVIADO.
+// Apps Script corta cada ejecución a los 6 minutos, así que aquí se
+// detiene a los ~5 min: si quedan filas pendientes, vuelve a correrla
+// (las ya enviadas se saltan solas).
 // ============================================================
+
+function cargarEstadosPorSourceKey_() {
+  var sheet = getMasterSpreadsheet_().getSheetByName(MASTER_SHEETS.PARTICIPANTES);
+  var values = sheet.getDataRange().getValues();
+  var mapa = {};
+  for (var i = 1; i < values.length; i++) {
+    var key = values[i][COL_PARTICIPANTES.SOURCE_KEY];
+    if (key) mapa[key] = values[i][COL_PARTICIPANTES.BADGE_STATUS];
+  }
+  return mapa;
+}
 
 function reprocesarTodo() {
   var inicio = new Date().getTime();
@@ -246,11 +280,10 @@ function reprocesarTodo() {
         Logger.log('Fuente ' + fuente.id + ': no se encontró la pestaña "' + fuente.HOJA_NOMBRE + '" (revisa el nombre).');
         continue;
       }
-      var headers = asegurarColumnasDeControl(hoja);
-      var idx = {};
-      headers.forEach(function (h, i) { idx[h] = i; });
-
+      var idx = construirIndiceEncabezados_(hoja);
       var totalFilas = hoja.getLastRow();
+      stats.filas = Math.max(0, totalFilas - 1); // sin contar encabezados
+
       for (var row = 2; row <= totalFilas; row++) {
         if (new Date().getTime() - inicio > LIMITE_MS) {
           terminoPorTiempo = true;
@@ -286,6 +319,8 @@ function recopilarFormas(elementos, resultado) {
 // Reduce el tamaño de letra del nombre si es muy largo, para que no se
 // desborde de su recuadro. Ajusta los números (longitud y factor) a tu
 // gusto, según qué tan grande sea el recuadro en tu plantilla.
+// desborde de su recuadro. Ajusta los números (longitud y factor) a tu
+// gusto, según qué tan grande sea el recuadro en tu plantilla.
 function ajustarTamanoDeFuente(shape, nombre, tamanoOriginal) {
   var longitud = nombre.length;
   var factor = 1;
@@ -294,8 +329,13 @@ function ajustarTamanoDeFuente(shape, nombre, tamanoOriginal) {
   else if (longitud > 24) factor = 0.55;
   else if (longitud > 18) factor = 0.7;
   else if (longitud > 12) factor = 0.85;
+  if (longitud > 30) factor = 0.45;
+  else if (longitud > 24) factor = 0.55;
+  else if (longitud > 18) factor = 0.7;
+  else if (longitud > 12) factor = 0.85;
 
   if (factor < 1) {
+    var nuevoTamano = Math.max(9, Math.round(tamanoOriginal * factor));
     var nuevoTamano = Math.max(9, Math.round(tamanoOriginal * factor));
     shape.getText().getTextStyle().setFontSize(nuevoTamano);
   }
@@ -343,6 +383,8 @@ function generarGafete(nombre, categoria, folio) {
     // Crece un poco desde el tamaño original del recuadro (25% más grande),
     // manteniendo el mismo borde SUPERIOR (crece hacia abajo, no hacia
     // arriba, para no invadir la barra de categoría que está encima).
+    // manteniendo el mismo borde SUPERIOR (crece hacia abajo, no hacia
+    // arriba, para no invadir la barra de categoría que está encima).
     var factorCrecimiento = 1.25;
     var nuevoAncho = posicionQR.width * factorCrecimiento;
     var nuevoAlto = posicionQR.height * factorCrecimiento;
@@ -350,6 +392,7 @@ function generarGafete(nombre, categoria, folio) {
 
     caja = {
       left: centroX - nuevoAncho / 2,
+      top: posicionQR.top,
       top: posicionQR.top,
       width: nuevoAncho,
       height: nuevoAlto,
@@ -377,6 +420,7 @@ function enviarGafetePorCorreo(correo, nombre, gafetePdf) {
     'Gracias por tu inscripción al Congreso Nacional de Anatomía 2026.\n' +
     'Adjunto tu gafete en PDF con tu código QR personal.\n\n' +
     'Preséntalo, desde tu celular, el día del evento para el acceso y pase de lista.\n\n' +
+    'Preséntalo, desde tu celular, el día del evento para el acceso y pase de lista.\n\n' +
     'Nos vemos pronto.';
 
   GmailApp.sendEmail(correo, ASUNTO_CORREO, cuerpo, {
@@ -388,13 +432,52 @@ function enviarGafetePorCorreo(correo, nombre, gafetePdf) {
 /**
  * ============================================================
  * CÓMO ACTIVAR EL MODO INSTANTÁNEO (hacerlo 3 veces, una por Sheet)
+ * CÓMO ACTIVAR EL MODO INSTANTÁNEO (hacerlo 3 veces, una por Sheet)
  * ============================================================
+ * 1. En este proyecto de Apps Script, ícono del reloj (Activadores).
+ * 2. Botón "+ Añadir activador".
  * 1. En este proyecto de Apps Script, ícono del reloj (Activadores).
  * 2. Botón "+ Añadir activador".
  * 3. Función a ejecutar: onFormSubmitHandler
  * 4. Implementación: Head
  * 5. Origen del evento: "Desde la hoja de cálculo"
  * 6. Tipo de evento: "Al enviarse el formulario"
+ * 7. Elige el Sheet (Foráneos / USEP / BUAP) y guarda.
+ * 8. Repite para cada uno de los otros Sheets.
+ *
+ * Al final: 3 activadores, todos con la función onFormSubmitHandler,
+ * cada uno vigilando un Sheet distinto.
+ */
+
+/**
+ * Ejecuta esta función UNA SOLA VEZ desde el editor de Apps Script
+ * para vincular automáticamente los 3 Sheets externos a tu función onFormSubmitHandler.
+ */
+function crearActivadoresParaLos3Sheets() {
+  // 1. Limpiamos activadores previos para no duplicarlos si la vuelves a correr
+  const triggersExistentes = ScriptApp.getProjectTriggers();
+  triggersExistentes.forEach(trigger => {
+    if (trigger.getHandlerFunction() === 'onFormSubmitHandler') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  // 2. Creamos un activador por cada fuente definida en tu arreglo FUENTES
+  FUENTES.forEach(fuente => {
+    try {
+      const ss = SpreadsheetApp.openById(fuente.SPREADSHEET_ID);
+      
+      ScriptApp.newTrigger('onFormSubmitHandler')
+        .forSpreadsheet(ss)
+        .onFormSubmit()
+        .create();
+
+      Logger.log(' Activador creado con éxito para: ' + fuente.id + ' (' + ss.getName() + ')');
+    } catch (err) {
+      Logger.log('Error al crear activador para ' + fuente.id + ': ' + err);
+    }
+  });
+}
  * 7. Elige el Sheet (Foráneos / USEP / BUAP) y guarda.
  * 8. Repite para cada uno de los otros Sheets.
  *
