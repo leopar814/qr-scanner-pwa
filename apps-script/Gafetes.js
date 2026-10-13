@@ -23,7 +23,7 @@ const ASUNTO_CORREO = 'Tu gafete - Congreso Nacional de Anatomía 2026';
 const WEBAPP_URL = 'https://PENDIENTE-DE-PUBLICAR';
 
 const PLACEHOLDER_NOMBRE = '<<NOMBRE>>';
-const PLACEHOLDER_QR     = '<<QR>>';
+const PLACEHOLDER_QR = '<<QR>>';
 
 // Las hojas de respuestas de Google Forms NO se modifican.
 // Folio, estado de envío y demás datos de control viven exclusivamente
@@ -49,7 +49,7 @@ const FUENTES = [
         .map(function (s) { return (s || '').toString().trim(); })
         .filter(function (s) { return s.length > 0; })
         .join(' ');
-        
+
       var universidad = (fila[idx['Universidad a la que pertence']] || '').toString().toUpperCase();
       var sector = 'EXTERNA';
       if (universidad.indexOf('BUAP') !== -1) sector = 'BUAP';
@@ -107,7 +107,7 @@ const FUENTES = [
   },
 ];
 
-// ============================================================
+// ============================================================<
 // DISPARADOR INSTANTÁNEO — se activa solo al enviar cualquiera de
 // los formularios (ver instrucciones de instalación al final)
 // ============================================================
@@ -261,9 +261,9 @@ function actualizarEstadoParticipante_(folio, estado, errorMensaje) {
     var values = sheet.getDataRange().getValues();
 
     // Validamos los índices de columna y aseguramos que mínimo sea columna 1
-    var colBadgeStatus  = Math.max(1, (COL_PARTICIPANTES.BADGE_STATUS !== undefined ? COL_PARTICIPANTES.BADGE_STATUS : 7) + 1);
+    var colBadgeStatus = Math.max(1, (COL_PARTICIPANTES.BADGE_STATUS !== undefined ? COL_PARTICIPANTES.BADGE_STATUS : 7) + 1);
     var colErrorMessage = Math.max(1, (COL_PARTICIPANTES.ERROR_MESSAGE !== undefined ? COL_PARTICIPANTES.ERROR_MESSAGE : 12) + 1);
-    var colUpdatedAt   = Math.max(1, (COL_PARTICIPANTES.UPDATED_AT !== undefined ? COL_PARTICIPANTES.UPDATED_AT : 10) + 1);
+    var colUpdatedAt = Math.max(1, (COL_PARTICIPANTES.UPDATED_AT !== undefined ? COL_PARTICIPANTES.UPDATED_AT : 10) + 1);
 
     for (var row = 1; row < values.length; row++) {
       if (values[row][COL_PARTICIPANTES.FOLIO] === folio) {
@@ -371,16 +371,16 @@ function reprocesarTodo() {
       return;
     }
     Logger.log(fu.id + ' | Filas: ' + s.filas +
-               ' | Enviados ahora: ' + s.enviados +
-               ' | Ya enviados: ' + s.saltados +
-               ' | Pendientes/Error: ' + s.noEnviados);
+      ' | Enviados ahora: ' + s.enviados +
+      ' | Ya enviados: ' + s.saltados +
+      ' | Pendientes/Error: ' + s.noEnviados);
     totEnv += s.enviados;
     totSalt += s.saltados;
     totNo += s.noEnviados;
   });
   Logger.log('TOTAL | Enviados ahora: ' + totEnv +
-             ' | Ya enviados: ' + totSalt +
-             ' | Pendientes/Error: ' + totNo);
+    ' | Ya enviados: ' + totSalt +
+    ' | Pendientes/Error: ' + totNo);
   if (terminoPorTiempo) Logger.log('OJO: se cortó por tiempo, faltan filas por revisar.');
   Logger.log('Reproceso terminado.');
 }
@@ -536,7 +536,7 @@ function crearActivadoresParaLos3Sheets() {
   FUENTES.forEach(fuente => {
     try {
       const ss = SpreadsheetApp.openById(fuente.SPREADSHEET_ID);
-      
+
       ScriptApp.newTrigger('onFormSubmitHandler')
         .forSpreadsheet(ss)
         .onFormSubmit()
