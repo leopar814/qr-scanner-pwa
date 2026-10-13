@@ -3,29 +3,15 @@
  * ============================================================
  * ENVIAR GAFETES CON QR - CONGRESO DE ANATOMÍA (modo instantáneo)
  * ============================================================
- * Generación del gafete (plantilla de Slides + QR de quickchart.io
- * + PDF por correo) TAL CUAL como se venía trabajando — sin cambios
- * respecto a la versión original. Lo único agregado es una llamada
- * a registrarEnMaestro_() (ver MaestroConsolidacion.gs) justo
- * después de que el envío se confirma, para consolidar el registro
- * en el spreadsheet maestro que usa la validación de la PWA.
+ * Cuando alguien envía cualquiera de los 3 formularios (Foráneos,
+ * USEP, BUAP) se genera su gafete (plantilla de Slides + QR de
+ * quickchart.io), se manda en PDF por correo y se consolida en el
+ * spreadsheet maestro (registrarEnMaestro_, en MaestroConsolidacion.gs).
  *
- * La validación (doPost) y el pase de lista ya NO viven aquí —
- * están en Validacion.gs, adaptados para trabajar contra el
- * spreadsheet maestro en vez de recorrer cada FUENTE por separado.
- */
-
-/**
- * ============================================================
- * ENVIAR GAFETES CON QR - CONGRESO DE ANATOMÍA (modo instantáneo)
- * ============================================================
+ * La validación (doPost) y el pase de lista viven en Validacion.gs.
  *
- * A diferencia de la versión anterior (que corrías a mano y repasaba
- * TODA la hoja), esta versión reacciona AL INSTANTE cuando alguien
- * envía cualquiera de los 2 formularios, procesando solo esa fila nueva.
- *
- * Para activarlo, hay que crear 2 disparadores (uno por formulario) —
- * ver instrucciones al final de este archivo.
+ * REQUIERE el archivo LimpiarNombre.gs en el mismo proyecto
+ * (usa construirNombreCompleto_ y limpiarNombreCompleto_).
  */
 
 // ============================================================
@@ -49,18 +35,17 @@ const COL_ENVIADO = 'Gafete enviado';
 
 const FUENTES = [
   {
+    // Formulario general (foráneos)
     id: 'GENERAL',
     PREFIJO: 'GEN',
-    SPREADSHEET_ID: 'PON_AQUI_EL_ID_DEL_SHEET_GENERAL',
-    HOJA_NOMBRE: 'PON_AQUI_EL_NOMBRE_DE_LA_PESTAÑA',
+    SPREADSHEET_ID: '1BW5ifXpmGlanJbo2HXGWCbt3M9qAUDDDVXDK2O8mNZo',
+    HOJA_NOMBRE: 'Respuestas de formulario 2',
     extraerDatos: function (fila, idx) {
-      var nombre = [
+      var nombre = construirNombreCompleto_([
         fila[idx['Nombre(s):']],
         fila[idx['Apellido Paterno:']],
         fila[idx['Apellido Materno:']],
-      ].filter(function (p) {
-        return p && p.toString().trim() && p.toString().trim() !== '-';
-      }).join(' ').trim();
+      ]);
 
       var universidad = (fila[idx['Universidad a la que pertence']] || '').toString().toUpperCase();
       var sector = 'EXTERNA';
@@ -85,13 +70,14 @@ const FUENTES = [
     },
   },
   {
+    // Formulario USEP
     id: 'USEP',
     PREFIJO: 'USEP',
-    SPREADSHEET_ID: 'PON_AQUI_EL_ID_DEL_SHEET_USEP',
-    HOJA_NOMBRE: 'PON_AQUI_EL_NOMBRE_DE_LA_PESTAÑA',
+    SPREADSHEET_ID: '1ypM-Qcv2bj-_R96r-Lanuk0qlkRmujpOaOA1Vi823_A',
+    HOJA_NOMBRE: 'Respuestas de formulario 1',
     extraerDatos: function (fila, idx) {
       return {
-        nombre: (fila[idx['Nombre completo. Cuide que sea correcto por que asi aparecerá en su constancia.']] || '').toString().trim(),
+        nombre: limpiarNombreCompleto_(fila[idx['Nombre completo. Cuide que sea correcto por que asi aparecerá en su constancia.']]),
         correo: (fila[idx['Correo electrónico. Favor de asegurarse que esté bien escrito, y que sea el que revise con mayor frecuencia, ya que ahi llegará la constancia correspondiente']] || '').toString().trim(),
         categoria: 'ESTUDIANTE',
         sector: 'USEP',
@@ -100,19 +86,18 @@ const FUENTES = [
     },
   },
   {
-    // FUENTE DE PRUEBA — mismo formato que USEP, pero en una pestaña
-    // separada solo para pruebas. Bórrala del arreglo cuando ya no la
-    // necesites (o coméntala con // delante de cada línea).
-    id: 'PRUEBA',
-    PREFIJO: 'TEST',
-    SPREADSHEET_ID: '1AT53Gxxy9fni9fGKSZqPJt_gzO8yaQ5X6g5xA82HSkY',
-    HOJA_NOMBRE: 'Respuestas de formulario 1',
+    // Formulario BUAP. OJO: su encabezado de nombre termina en
+    // "constancia" SIN punto (el de USEP sí lleva punto).
+    id: 'BUAP',
+    PREFIJO: 'BUAP',
+    SPREADSHEET_ID: '1xYaskYRKFcJ_Wfwc0mGNygQetYrUbwjXc_RknMJL5NY',
+    HOJA_NOMBRE: 'Respuestas de formulario 2',
     extraerDatos: function (fila, idx) {
       return {
-        nombre: (fila[idx['Nombre completo. Cuide que sea correcto por que asi aparecerá en su constancia.']] || '').toString().trim(),
+        nombre: limpiarNombreCompleto_(fila[idx['Nombre completo. Cuide que sea correcto por que asi aparecerá en su constancia']]),
         correo: (fila[idx['Correo electrónico. Favor de asegurarse que esté bien escrito, y que sea el que revise con mayor frecuencia, ya que ahi llegará la constancia correspondiente']] || '').toString().trim(),
         categoria: 'ESTUDIANTE',
-        sector: 'USEP',
+        sector: 'BUAP',
         comprobante: (fila[idx['Ficha de Pago']] || '').toString().trim(),
       };
     },
@@ -121,11 +106,16 @@ const FUENTES = [
 
 // ============================================================
 // DISPARADOR INSTANTÁNEO — se activa solo al enviar cualquiera de
-// los 2 formularios (ver instrucciones de instalación al final)
+// los formularios (ver instrucciones de instalación al final)
 // ============================================================
 
 function onFormSubmitHandler(e) {
   try {
+    if (!e || !e.range) {
+      Logger.log('Aviso: Esta función se ejecuta automáticamente al recibir un Formulario.');
+      return;
+    }
+
     var hoja = e.range.getSheet();
     var spreadsheetId = hoja.getParent().getId();
     var row = e.range.getRow();
@@ -136,9 +126,8 @@ function onFormSubmitHandler(e) {
       return;
     }
 
-    var headers = asegurarColumnasDeControl(hoja);
-    var idx = {};
-    headers.forEach(function (h, i) { idx[h] = i; });
+    // 1. Asegura columnas en el Sheet y obtiene el mapa de índices ACTUALIZADO
+    var idx = asegurarColumnasDeControl(hoja);
 
     procesarFila(fuente, hoja, idx, row);
 
@@ -147,15 +136,19 @@ function onFormSubmitHandler(e) {
   }
 }
 
-// ============================================================
-// PROCESA UNA SOLA FILA (usada por el disparador instantáneo)
-// ============================================================
-
 function procesarFila(fuente, hoja, idx, row) {
-  var fila = hoja.getRange(row, 1, 1, hoja.getLastColumn()).getValues()[0];
+  // Leemos la fila completa con el ancho de columnas actualizado
+  var lastCol = hoja.getLastColumn();
+  var fila = hoja.getRange(row, 1, 1, lastCol).getValues()[0];
   var d = fuente.extraerDatos(fila, idx);
 
-  var yaEnviado = (fila[idx[COL_ENVIADO]] || '').toString().trim().toUpperCase();
+  var colEnviadoIdx = idx[COL_ENVIADO];
+  var colFolioIdx   = idx[COL_FOLIO];
+  var colSectorIdx  = idx[COL_SECTOR];
+
+  var yaEnviado = (colEnviadoIdx !== undefined && fila[colEnviadoIdx]) 
+    ? fila[colEnviadoIdx].toString().trim().toUpperCase() 
+    : '';
 
   if (
     yaEnviado === 'ENVIADO' ||
@@ -164,66 +157,94 @@ function procesarFila(fuente, hoja, idx, row) {
     !d.comprobante
   ) {
     Logger.log('Saltado [' + fuente.id + ' fila ' + row + ']: ' + d.nombre + ' | ' + d.correo + ' | comprobante: ' + (d.comprobante ? 'sí' : 'NO'));
-    if (!d.comprobante) {
-      hoja.getRange(row, idx[COL_ENVIADO] + 1).setValue('PENDIENTE - sin comprobante');
+    if (!d.comprobante && colEnviadoIdx !== undefined) {
+      hoja.getRange(row, colEnviadoIdx + 1).setValue('PENDIENTE - sin comprobante');
     }
-    return;
+    return false;
   }
 
-  var folio = (fila[idx[COL_FOLIO]] || '').toString().trim();
+  // Obtener o asignar Folio
+  var folio = (colFolioIdx !== undefined && fila[colFolioIdx]) 
+    ? fila[colFolioIdx].toString().trim() 
+    : '';
+
   if (!folio) {
     folio = fuente.PREFIJO + '-' + String(row).padStart(4, '0');
-    hoja.getRange(row, idx[COL_FOLIO] + 1).setValue(folio);
+    if (colFolioIdx !== undefined) {
+      hoja.getRange(row, colFolioIdx + 1).setValue(folio);
+    }
   }
 
-  hoja.getRange(row, idx[COL_SECTOR] + 1).setValue(d.sector);
+  // Registrar Sector de acceso
+  if (colSectorIdx !== undefined) {
+    hoja.getRange(row, colSectorIdx + 1).setValue(d.sector);
+  }
 
   try {
     var gafeteBlob = generarGafete(d.nombre, d.categoria, folio);
     enviarGafetePorCorreo(d.correo, d.nombre, gafeteBlob);
-    hoja.getRange(row, idx[COL_ENVIADO] + 1).setValue('ENVIADO');
+    
+    if (colEnviadoIdx !== undefined) {
+      hoja.getRange(row, colEnviadoIdx + 1).setValue('ENVIADO');
+    }
+    
     Logger.log('Enviado [' + fuente.id + ']: ' + d.nombre + ' | ' + d.correo + ' | folio: ' + folio);
 
-    // Consolidación hacia el spreadsheet maestro "XXXI CNA PARTICIPANTES"
-    // (MaestroConsolidacion.gs). Va en su propio try/catch: si esto falla,
-    // el gafete YA se envió correctamente y eso no debe revertirse ni
-    // marcarse como ERROR — solo se registra para revisar aparte.
     try {
       registrarEnMaestro_(fuente, d, folio);
     } catch (errMaestro) {
-      Logger.log('Aviso: el gafete de ' + folio + ' se envió bien, pero no se pudo ' +
-        'consolidar en el spreadsheet maestro: ' + errMaestro);
+      Logger.log('Aviso: el gafete de ' + folio + ' se envió bien, pero no se pudo consolidar en el maestro: ' + errMaestro);
     }
+    return true;
+
   } catch (err) {
-    hoja.getRange(row, idx[COL_ENVIADO] + 1).setValue('ERROR: ' + err);
+    if (colEnviadoIdx !== undefined) {
+      hoja.getRange(row, colEnviadoIdx + 1).setValue('ERROR: ' + err);
+    }
     Logger.log('Error generando gafete [' + fuente.id + ' fila ' + row + ']: ' + err);
+    return false;
   }
 }
 
 function asegurarColumnasDeControl(hoja) {
-  var headers = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
+  var headers = hoja.getRange(1, 1, 1, Math.max(1, hoja.getLastColumn())).getValues()[0];
+
   [COL_FOLIO, COL_SECTOR, COL_ENVIADO].forEach(function (col) {
     if (headers.indexOf(col) === -1) {
       hoja.getRange(1, headers.length + 1).setValue(col);
       headers.push(col);
     }
   });
-  return headers;
+
+  // Retorna el mapa completo de índices (NombreEncabezado -> PosiciónBase0)
+  var idxMap = {};
+  headers.forEach(function (h, i) { 
+    idxMap[h.toString().trim()] = i; 
+  });
+  
+  return idxMap;
 }
 
 // ============================================================
 // REPROCESAR TODO (opcional) — red de seguridad / primera carga
-// Úsala si quieres procesar inscripciones que ya existían ANTES de
-// activar los disparadores, o si alguna fila quedó en PENDIENTE/ERROR.
+// Manda gafete a TODA fila con comprobante que no diga ENVIADO.
+// Apps Script corta cada ejecución a los 6 minutos, así que aquí se
+// detiene a los ~5 min: si quedan filas pendientes, vuelve a correrla
+// (las ya enviadas se saltan solas).
 // ============================================================
 
 function reprocesarTodo() {
-  FUENTES.forEach(function (fuente) {
+  var inicio = new Date().getTime();
+  var LIMITE_MS = 5 * 60 * 1000;
+  var terminoPorTiempo = false;
+
+  for (var f = 0; f < FUENTES.length && !terminoPorTiempo; f++) {
+    var fuente = FUENTES[f];
     try {
       var hoja = SpreadsheetApp.openById(fuente.SPREADSHEET_ID).getSheetByName(fuente.HOJA_NOMBRE);
       if (!hoja) {
         Logger.log('Fuente ' + fuente.id + ': no se encontró la pestaña "' + fuente.HOJA_NOMBRE + '" (revisa el nombre).');
-        return;
+        continue;
       }
       var headers = asegurarColumnasDeControl(hoja);
       var idx = {};
@@ -231,15 +252,20 @@ function reprocesarTodo() {
 
       var totalFilas = hoja.getLastRow();
       for (var row = 2; row <= totalFilas; row++) {
-        procesarFila(fuente, hoja, idx, row);
-        Utilities.sleep(1000);
+        if (new Date().getTime() - inicio > LIMITE_MS) {
+          terminoPorTiempo = true;
+          Logger.log('Se alcanzó el límite de tiempo. Vuelve a ejecutar reprocesarTodo() para continuar.');
+          break;
+        }
+        var envio = procesarFila(fuente, hoja, idx, row);
+        if (envio) Utilities.sleep(1000);
       }
-      Logger.log('Fuente ' + fuente.id + ': reprocesada correctamente.');
+      Logger.log('Fuente ' + fuente.id + ': revisada.');
     } catch (err) {
-      Logger.log('Fuente ' + fuente.id + ': se omitió por error (¿SPREADSHEET_ID sigue con PON_AQUI?) — ' + err);
+      Logger.log('Fuente ' + fuente.id + ': se omitió por error — ' + err);
     }
-  });
-  Logger.log('Reproceso completo.');
+  }
+  Logger.log('Reproceso terminado.');
 }
 
 // ============================================================
@@ -258,19 +284,19 @@ function recopilarFormas(elementos, resultado) {
 }
 
 // Reduce el tamaño de letra del nombre si es muy largo, para que no se
-// desborde de su recuadro. Ajusta los números de abajo (longitud de
-// caracteres y el factor de reducción) a tu gusto, según qué tan grande
-// sea el recuadro real en tu plantilla.
+// desborde de su recuadro. Ajusta los números (longitud y factor) a tu
+// gusto, según qué tan grande sea el recuadro en tu plantilla.
 function ajustarTamanoDeFuente(shape, nombre, tamanoOriginal) {
   var longitud = nombre.length;
   var factor = 1;
 
-  if (longitud > 32) factor = 0.55;
-  else if (longitud > 26) factor = 0.7;
-  else if (longitud > 20) factor = 0.85;
+  if (longitud > 30) factor = 0.45;
+  else if (longitud > 24) factor = 0.55;
+  else if (longitud > 18) factor = 0.7;
+  else if (longitud > 12) factor = 0.85;
 
   if (factor < 1) {
-    var nuevoTamano = Math.max(10, Math.round(tamanoOriginal * factor));
+    var nuevoTamano = Math.max(9, Math.round(tamanoOriginal * factor));
     shape.getText().getTextStyle().setFontSize(nuevoTamano);
   }
 }
@@ -315,8 +341,8 @@ function generarGafete(nombre, categoria, folio) {
   var caja;
   if (posicionQR) {
     // Crece un poco desde el tamaño original del recuadro (25% más grande),
-    // pero manteniendo el mismo borde SUPERIOR (no se recorre hacia arriba,
-    // para no invadir la barra de categoría que está justo encima).
+    // manteniendo el mismo borde SUPERIOR (crece hacia abajo, no hacia
+    // arriba, para no invadir la barra de categoría que está encima).
     var factorCrecimiento = 1.25;
     var nuevoAncho = posicionQR.width * factorCrecimiento;
     var nuevoAlto = posicionQR.height * factorCrecimiento;
@@ -324,7 +350,7 @@ function generarGafete(nombre, categoria, folio) {
 
     caja = {
       left: centroX - nuevoAncho / 2,
-      top: posicionQR.top, // se queda igual, crece hacia abajo, no hacia arriba
+      top: posicionQR.top,
       width: nuevoAncho,
       height: nuevoAlto,
     };
@@ -350,7 +376,7 @@ function enviarGafetePorCorreo(correo, nombre, gafetePdf) {
     'Hola ' + nombre + ',\n\n' +
     'Gracias por tu inscripción al Congreso Nacional de Anatomía 2026.\n' +
     'Adjunto tu gafete en PDF con tu código QR personal.\n\n' +
-    'Preséntalo, impreso o desde tu celular, el día del evento para el acceso y pase de lista.\n\n' +
+    'Preséntalo, desde tu celular, el día del evento para el acceso y pase de lista.\n\n' +
     'Nos vemos pronto.';
 
   GmailApp.sendEmail(correo, ASUNTO_CORREO, cuerpo, {
@@ -359,22 +385,49 @@ function enviarGafetePorCorreo(correo, nombre, gafetePdf) {
   });
 }
 
-
 /**
  * ============================================================
- * CÓMO ACTIVAR EL MODO INSTANTÁNEO (hacerlo 2 veces, una por Sheet)
+ * CÓMO ACTIVAR EL MODO INSTANTÁNEO (hacerlo 3 veces, una por Sheet)
  * ============================================================
- * 1. En este proyecto de Apps Script, ícono del reloj (Activadores) en
- *    el menú de la izquierda.
- * 2. Botón "+ Añadir activador" (esquina inferior derecha).
+ * 1. En este proyecto de Apps Script, ícono del reloj (Activadores).
+ * 2. Botón "+ Añadir activador".
  * 3. Función a ejecutar: onFormSubmitHandler
  * 4. Implementación: Head
  * 5. Origen del evento: "Desde la hoja de cálculo"
  * 6. Tipo de evento: "Al enviarse el formulario"
- * 7. Te va a pedir seleccionar/pegar CUÁL hoja de cálculo — elige la
- *    del Sheet GENERAL. Guarda.
- * 8. Repite los pasos 2-7, pero eligiendo la hoja de cálculo de USEP.
+ * 7. Elige el Sheet (Foráneos / USEP / BUAP) y guarda.
+ * 8. Repite para cada uno de los otros Sheets.
  *
- * Al final debes tener 2 activadores en la lista, ambos apuntando a
- * la misma función "onFormSubmitHandler", cada uno vigilando un Sheet.
+ * Al final: 3 activadores, todos con la función onFormSubmitHandler,
+ * cada uno vigilando un Sheet distinto.
  */
+
+/**
+ * Ejecuta esta función UNA SOLA VEZ desde el editor de Apps Script
+ * para vincular automáticamente los 3 Sheets externos a tu función onFormSubmitHandler.
+ */
+function crearActivadoresParaLos3Sheets() {
+  // 1. Limpiamos activadores previos para no duplicarlos si la vuelves a correr
+  const triggersExistentes = ScriptApp.getProjectTriggers();
+  triggersExistentes.forEach(trigger => {
+    if (trigger.getHandlerFunction() === 'onFormSubmitHandler') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  // 2. Creamos un activador por cada fuente definida en tu arreglo FUENTES
+  FUENTES.forEach(fuente => {
+    try {
+      const ss = SpreadsheetApp.openById(fuente.SPREADSHEET_ID);
+      
+      ScriptApp.newTrigger('onFormSubmitHandler')
+        .forSpreadsheet(ss)
+        .onFormSubmit()
+        .create();
+
+      Logger.log(' Activador creado con éxito para: ' + fuente.id + ' (' + ss.getName() + ')');
+    } catch (err) {
+      Logger.log('Error al crear activador para ' + fuente.id + ': ' + err);
+    }
+  });
+}
