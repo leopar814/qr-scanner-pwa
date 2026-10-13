@@ -52,12 +52,12 @@ function validarYRegistrarAsistencia_(folio, deviceId) {
     return { result: 'REJECTED', reason: 'UNKNOWN_TOKEN' };
   }
 
-  if (participante.values[COL_PARTICIPANTES.STATUS] === 'REVOKED') {
+  if (participante.status === 'REVOKED') {
     logScan_(ss, deviceId, folio, 'REJECTED', 'REVOKED', false);
     return { result: 'REJECTED', reason: 'REVOKED' };
   }
 
-  const fullName = participante.values[COL_PARTICIPANTES.FULL_NAME];
+  const fullName = participante.full_name;
   const today = todayString_();
 
   const lock = LockService.getScriptLock();

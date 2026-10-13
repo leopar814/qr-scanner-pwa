@@ -8,7 +8,7 @@
 // PENDIENTE: crea (o localiza) un Google Sheet llamado exactamente
 // "XXXI CNA PARTICIPANTES", ábrelo, y pega su ID aquí (está en la URL,
 // entre /d/ y /edit). Mismo patrón que SPREADSHEET_ID en Gafetes.gs.
-const MASTER_SPREADSHEET_ID = '1lBj6gBC99IpimMjGjhahm1zFpBIA5qgV1qSt-3fCQXk';
+const MASTER_SPREADSHEET_ID = '';
 
 const MASTER_SHEETS = {
   PARTICIPANTES: 'Participantes',
