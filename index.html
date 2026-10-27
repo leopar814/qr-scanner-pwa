@@ -37,11 +37,15 @@
       <button id="config-btn" class="icon-btn" aria-label="Configuración" title="Configuración">⚙︎</button>
     </header>
 
-    <div class="camera-wrap">
+    <div>
+      <label>Folio: </label>
+      <input id="codeInput" type="text" required/>
+    </div>
+    <!-- <div class="camera-wrap">
       <video id="camera-feed" playsinline muted></video>
       <canvas id="scan-canvas" class="hidden"></canvas>
       <div class="scan-frame"></div>
-    </div>
+    </div> -->
 
     <p id="scan-hint" class="scan-hint">Apunta la cámara al código QR del gafete</p>
   </section>

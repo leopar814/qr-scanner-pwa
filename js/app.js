@@ -17,7 +17,7 @@ const els = {
   scanHint: document.getElementById("scan-hint"),
   configBtn: document.getElementById("config-btn"),
   toggleCamBtn: document.getElementById("toggle-cam-btn"),
-
+  codeInput: document.getElementById('codeInput'),
   resultIcon: document.getElementById("result-icon"),
   resultTitle: document.getElementById("result-title"),
   resultName: document.getElementById("result-name"),
@@ -125,83 +125,87 @@ function updateConnectionBadge() {
   els.connectionBadge.classList.toggle("offline", !online);
 }
 
+function extractCode() {
+  validateToken(els.codeInput.textContent);
+
+}
 // ---------- Cámara y escaneo ----------
 
-async function startCamera() {
-  if (typeof jsQR !== "function") {
-    els.scanHint.textContent =
-      "No se pudo cargar el lector de QR (revisa la conexión). Reintentando…";
-    console.error("jsQR no está definido — el script del CDN no cargó.");
-    setTimeout(startCamera, 3000);
-    return;
-  }
+// async function startCamera() {
+//   if (typeof jsQR !== "function") {
+//     els.scanHint.textContent =
+//       "No se pudo cargar el lector de QR (revisa la conexión). Reintentando…";
+//     console.error("jsQR no está definido — el script del CDN no cargó.");
+//     setTimeout(startCamera, 3000);
+//     return;
+//   }
 
-  try {
-    // Si la cámara es la frontal ('user'), invertimos el video horizontalmente con CSS
-    if (currentFacingMode === "user") {
-      els.video.style.transform = "scaleX(-1)";
-    } else {
-      els.video.style.transform = "none";
-    }
+//   try {
+//     // Si la cámara es la frontal ('user'), invertimos el video horizontalmente con CSS
+//     if (currentFacingMode === "user") {
+//       els.video.style.transform = "scaleX(-1)";
+//     } else {
+//       els.video.style.transform = "none";
+//     }
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacingMode },
-    });
-    els.video.srcObject = stream;
-    await els.video.play();
-    scanning = true;
-    els.scanHint.textContent = "Apunta la cámara al código QR del gafete";
-    rafId = requestAnimationFrame(scanLoop);
-  } catch (err) {
-    els.scanHint.textContent =
-      "No se pudo acceder a la cámara. Revisa permisos y reinicia la app.";
-    console.error("Camera error:", err);
-  }
-}
+//     stream = await navigator.mediaDevices.getUserMedia({
+//       video: { facingMode: currentFacingMode },
+//     });
+//     els.video.srcObject = stream;
+//     await els.video.play();
+//     scanning = true;
+//     els.scanHint.textContent = "Apunta la cámara al código QR del gafete";
+//     rafId = requestAnimationFrame(scanLoop);
+//   } catch (err) {
+//     els.scanHint.textContent =
+//       "No se pudo acceder a la cámara. Revisa permisos y reinicia la app.";
+//     console.error("Camera error:", err);
+//   }
+// }
 
-function stopCamera() {
-  scanning = false;
-  if (rafId) cancelAnimationFrame(rafId);
-  if (stream) {
-    stream.getTracks().forEach((t) => t.stop());
-    stream = null;
-  }
-}
+// function stopCamera() {
+//   scanning = false;
+//   if (rafId) cancelAnimationFrame(rafId);
+//   if (stream) {
+//     stream.getTracks().forEach((t) => t.stop());
+//     stream = null;
+//   }
+// }
 
-function scanLoop() {
-  if (!scanning) return;
+// function scanLoop() {
+//   if (!scanning) return;
 
-  try {
-    if (els.video.readyState === els.video.HAVE_ENOUGH_DATA) {
-      els.canvas.width = els.video.videoWidth;
-      els.canvas.height = els.video.videoHeight;
-      canvasCtx.drawImage(els.video, 0, 0, els.canvas.width, els.canvas.height);
-      const imageData = canvasCtx.getImageData(
-        0,
-        0,
-        els.canvas.width,
-        els.canvas.height
-      );
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
+//   try {
+//     if (els.video.readyState === els.video.HAVE_ENOUGH_DATA) {
+//       els.canvas.width = els.video.videoWidth;
+//       els.canvas.height = els.video.videoHeight;
+//       canvasCtx.drawImage(els.video, 0, 0, els.canvas.width, els.canvas.height);
+//       const imageData = canvasCtx.getImageData(
+//         0,
+//         0,
+//         els.canvas.width,
+//         els.canvas.height
+//       );
+//       const code = jsQR(imageData.data, imageData.width, imageData.height, {
+//         inversionAttempts: "dontInvert",
+//       });
 
-      if (code && code.data) {
-        scanning = false;
-        stopCamera();
-        validateToken(code.data.trim());
-        return;
-      }
-    }
-  } catch (err) {
-    // Un error aquí antes NO se veía: el ciclo simplemente se detenía para
-    // siempre en el primer cuadro fallido, con la cámara aparentando
-    // funcionar. Ahora se registra y el ciclo se reintenta en el
-    // siguiente cuadro en vez de morir.
-    console.error("Error en scanLoop:", err);
-  }
-  rafId = requestAnimationFrame(scanLoop);
-}
+//       if (code && code.data) {
+//         scanning = false;
+//         stopCamera();
+//         validateToken(code.data.trim());
+//         return;
+//       }
+//     }
+//   } catch (err) {
+//     // Un error aquí antes NO se veía: el ciclo simplemente se detenía para
+//     // siempre en el primer cuadro fallido, con la cámara aparentando
+//     // funcionar. Ahora se registra y el ciclo se reintenta en el
+//     // siguiente cuadro en vez de morir.
+//     console.error("Error en scanLoop:", err);
+//   }
+//   rafId = requestAnimationFrame(scanLoop);
+// }
 
 // ---------- Validación contra el API (Apps Script) ----------
 
