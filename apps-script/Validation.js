@@ -21,7 +21,17 @@ function doPost(e) {
     return jsonResponse({ result: 'ERROR', reason: 'BAD_REQUEST' });
   }
 
-  return jsonResponse(validarYRegistrarAsistencia_(folio, deviceId));
+  // Si algo lanza una excepción aquí (ID del maestro vacío, pestaña
+  // inexistente, falta de permisos...), Apps Script respondería con una
+  // página HTML de error SIN encabezados CORS y el navegador solo mostraría
+  // "CORS error". Atrapándola, la PWA recibe un JSON y el motivo real
+  // queda en la consola y en Ejecuciones.
+  try {
+    return jsonResponse(validarYRegistrarAsistencia_(folio, deviceId));
+  } catch (err) {
+    console.error('Error en doPost: ' + err);
+    return jsonResponse({ result: 'ERROR', reason: 'SERVER_ERROR', message: String(err) });
+  }
 }
 
 function jsonResponse(obj) {

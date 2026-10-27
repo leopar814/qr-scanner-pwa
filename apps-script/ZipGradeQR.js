@@ -9,6 +9,7 @@
  * construirIndiceEncabezados_.
  */
 
+const ROOT_FOLDER_ID = '';
 const ZG_SPREADSHEET_ID = '';
 const ZG_CARPETA_GAFETES = 'Gafetes';
 
@@ -28,7 +29,8 @@ function generarGafetesZipGrade() {
   }
 
   var filas = hoja.getDataRange().getValues();
-  var carpeta = obtenerOCrearCarpeta_(ZG_CARPETA_GAFETES);
+  const padre = DriveApp.getFolderById(ROOT_FOLDER_ID);
+  var carpeta = obtenerOCrearCarpeta_(ZG_CARPETA_GAFETES, padre);
   var estados = cargarEstadosPorSourceKey_();
 
   // PDFs que ya existen en la carpeta, para no repetirlos.
@@ -146,7 +148,8 @@ function buscarColumnaCorreoZG_(idx) {
   return -1;
 }
 
-function obtenerOCrearCarpeta_(nombre) {
-  var it = DriveApp.getFoldersByName(nombre);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(nombre);
+function obtenerOCrearCarpeta_(nombre, padre) {
+  padre = padre || DriveApp.getRootFolder();
+  var it = padre.getFoldersByName(nombre);
+  return it.hasNext() ? it.next() : padre.createFolder(nombre);
 }
