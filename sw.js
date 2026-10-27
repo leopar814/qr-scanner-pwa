@@ -4,7 +4,7 @@
 // Script SIEMPRE van a la red — nunca se sirven desde caché, porque un
 // resultado de validación desactualizado sería peligroso en el acceso.
 
-const CACHE_NAME = "congreso-acceso-shell-v1";
+const CACHE_NAME = "congreso-acceso-shell-v2";
 const SHELL_FILES = [
   "./",
   "./index.html",

@@ -109,7 +109,7 @@ html, body {
 }
 
 .camera-wrap {
-  position: relative;
+  /* position: relative; */
   flex: 1;
   overflow: hidden;
   background: black;
