@@ -18,6 +18,7 @@ const els = {
   configBtn: document.getElementById("config-btn"),
   toggleCamBtn: document.getElementById("toggle-cam-btn"),
   codeInput: document.getElementById('codeInput'),
+  codeInputBtn: document.getElementById('codeInputBtn'),
   resultIcon: document.getElementById("result-icon"),
   resultTitle: document.getElementById("result-title"),
   resultName: document.getElementById("result-name"),
@@ -64,6 +65,11 @@ function init() {
     els.apiUrlInput.value = getApiUrl();
     showScreen("setup");
   });
+  
+  els.codeInputBtn.addEventListener("click", () => {
+    extractCode();
+  });
+
   els.toggleCamBtn.addEventListener("click", () => {
     els.toggleCamBtn.classList.add("is-active");
     stopCamera();
