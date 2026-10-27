@@ -1,13 +1,10 @@
 /**
- * MaestroConfig.gs
- * Constantes compartidas por MaestroSetup.gs, MaestroConsolidacion.gs y
+ * Config.gs
+ * Constantes compartidas por Setup.gs, Consolidacion.gs y
  * Validacion.gs — todo lo relacionado con el spreadsheet
  * "XXXI CNA PARTICIPANTES".
  */
 
-// PENDIENTE: crea (o localiza) un Google Sheet llamado exactamente
-// "XXXI CNA PARTICIPANTES", ábrelo, y pega su ID aquí (está en la URL,
-// entre /d/ y /edit). Mismo patrón que SPREADSHEET_ID en Gafetes.gs.
 const MASTER_SPREADSHEET_ID = '';
 
 const MASTER_SHEETS = {

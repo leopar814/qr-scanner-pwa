@@ -5,7 +5,7 @@
  * participantes el índice completo no cabría en una sola clave.
  *
  * La invalidación es por ESCRITURA (ver invalidateParticipantesCache_,
- * llamada desde MaestroConsolidacion.gs), no por tiempo — así alguien que
+ * llamada desde Consolidacion.gs), no por tiempo — así alguien que
  * se acaba de inscribir es encontrado en su primer intento de escaneo,
  * sin importar cuándo fue el último refresco del caché.
  */
@@ -64,7 +64,7 @@ function buildAndCacheParticipantesIndex_(sheet) {
 }
 
 // Llamar SIEMPRE justo después de agregar o modificar una fila en
-// Participantes (ver registrarEnMaestro_ en MaestroConsolidacion.gs).
+// Participantes.
 // No hace falta borrar los chunks viejos: quedan huérfanos e inofensivos
 // hasta que expiran solos — lo único que importa borrar es la clave meta,
 // porque su ausencia es la señal de "reconstruye desde la hoja".

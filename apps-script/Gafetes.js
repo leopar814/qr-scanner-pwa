@@ -6,12 +6,9 @@
  * Cuando alguien envía cualquiera de los 3 formularios (Foráneos,
  * USEP, BUAP) se genera su gafete (plantilla de Slides + QR de
  * quickchart.io), se manda en PDF por correo y se consolida en el
- * spreadsheet maestro (registrarEnMaestro_, en MaestroConsolidacion.gs).
+ * spreadsheet maestro.
  *
  * La validación (doPost) y el pase de lista viven en Validacion.gs.
- *
- * REQUIERE el archivo LimpiarNombre.gs en el mismo proyecto
- * (usa construirNombreCompleto_ y limpiarNombreCompleto_).
  */
 
 // ============================================================
@@ -20,7 +17,6 @@
 
 const PLANTILLA_ID = '1je9KB822uY1GlngpBHEhrulw2jzvXfQ6rVdsrVe8jM0';
 const ASUNTO_CORREO = 'Tu gafete - Congreso Nacional de Anatomía 2026';
-const WEBAPP_URL = 'https://PENDIENTE-DE-PUBLICAR';
 
 const PLACEHOLDER_NOMBRE = '<<NOMBRE>>';
 const PLACEHOLDER_QR = '<<QR>>';
@@ -89,8 +85,7 @@ const FUENTES = [
     },
   },
   {
-    // Formulario BUAP. OJO: su encabezado de nombre termina en
-    // "constancia" SIN punto (el de USEP sí lleva punto).
+    // Formulario BUAP
     id: 'BUAP',
     PREFIJO: 'BUAP',
     SPREADSHEET_ID: '',
@@ -206,7 +201,6 @@ function procesarFila(fuente, hoja, idx, row) {
 }
 
 /**
- * Crea el registro maestro antes de intentar generar/enviar el gafete.
  * Si ya existe el sourceKey, reutiliza el folio existente.
  */
 function obtenerOCrearParticipante_(fuente, d, sourceKey) {
@@ -294,11 +288,10 @@ function buscarParticipantePorSourceKey_(sheet, sourceKey) {
 }
 
 // ============================================================
-// REPROCESAR TODO (opcional) — red de seguridad / primera carga
+// REPROCESAR TODO — red de seguridad / primera carga
 // Manda gafete a TODA fila con comprobante que no diga ENVIADO.
 // Apps Script corta cada ejecución a los 6 minutos, así que aquí se
-// detiene a los ~5 min: si quedan filas pendientes, vuelve a correrla
-// (las ya enviadas se saltan solas).
+// detiene a los ~5 min (las ya enviadas se saltan solas).
 // ============================================================
 
 function cargarEstadosPorSourceKey_() {
@@ -401,8 +394,7 @@ function recopilarFormas(elementos, resultado) {
 }
 
 // Reduce el tamaño de letra del nombre si es muy largo, para que no se
-// desborde de su recuadro. Ajusta los números (longitud y factor) a tu
-// gusto, según qué tan grande sea el recuadro en tu plantilla.
+// desborde de su recuadro.
 function ajustarTamanoDeFuente(shape, nombre, tamanoOriginal) {
   var longitud = nombre.length;
   var factor = 1;
@@ -501,23 +493,6 @@ function enviarGafetePorCorreo(correo, nombre, gafetePdf) {
     name: 'Congreso Nacional de Anatomía',
   });
 }
-
-/**
- * ============================================================
- * CÓMO ACTIVAR EL MODO INSTANTÁNEO (hacerlo 3 veces, una por Sheet)
- * ============================================================
- * 1. En este proyecto de Apps Script, ícono del reloj (Activadores).
- * 2. Botón "+ Añadir activador".
- * 3. Función a ejecutar: onFormSubmitHandler
- * 4. Implementación: Head
- * 5. Origen del evento: "Desde la hoja de cálculo"
- * 6. Tipo de evento: "Al enviarse el formulario"
- * 7. Elige el Sheet (Foráneos / USEP / BUAP) y guarda.
- * 8. Repite para cada uno de los otros Sheets.
- *
- * Al final: 3 activadores, todos con la función onFormSubmitHandler,
- * cada uno vigilando un Sheet distinto.
- */
 
 /**
  * Ejecuta esta función UNA SOLA VEZ desde el editor de Apps Script

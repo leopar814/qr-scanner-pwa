@@ -1,8 +1,9 @@
 /**
- * MaestroSetup.gs
+ * Setup.gs
  * Ejecuta setupHojasMaestras() UNA SOLA VEZ, manualmente, después de
  * crear el Sheet "XXXI CNA PARTICIPANTES" y pegar su ID en
- * MaestroConfig.gs. Es seguro volver a correrla: no borra datos, solo
+ * Config.gs. 
+ * Es seguro volver a correrla: no borra datos, solo
  * crea lo que falte.
  */
 function setupHojasMaestras() {

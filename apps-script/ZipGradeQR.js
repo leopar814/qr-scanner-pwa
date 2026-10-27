@@ -9,7 +9,7 @@
  * construirIndiceEncabezados_.
  */
 
-const ZG_SPREADSHEET_ID = '13Io8yiseWXxFYUlL1mwhBr-b-iTKJzePf4EF3uNccNk';
+const ZG_SPREADSHEET_ID = '';
 const ZG_CARPETA_GAFETES = 'Gafetes';
 
 function generarGafetesZipGrade() {

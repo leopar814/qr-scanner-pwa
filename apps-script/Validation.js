@@ -1,20 +1,9 @@
 /**
  * Validacion.gs
- * Reemplaza el doPost() original de Gafetes.gs. Mismo contrato de
- * respuesta que ya esperaba la PWA (result/reason/full_name), pero
- * ahora lee de un solo spreadsheet maestro consolidado (en vez de
- * recorrer cada FUENTE por separado en cada escaneo), usa el índice
- * cacheado (CacheParticipantes.gs) para no releer toda la hoja en cada
+ * Mismo contrato de respuesta que ya esperaba la PWA (result/reason/full_name),
+ * usa el índice cacheado (CacheParticipantes.gs) para no releer toda la hoja en cada
  * escaneo, y usa LockService para que dos Android no puedan crear dos
  * asistencias del mismo día para el mismo folio.
- *
- * IMPORTANTE sobre el folio como "token": a diferencia de un token
- * opaco/aleatorio, folio es predecible (GEN-0001, GEN-0002, ...) y es
- * el mismo valor visible impreso en el gafete — se mantiene así porque
- * la generación del QR no se tocó (a petición explícita). Esto es una
- * decisión ya tomada sobre el diseño del gafete, no algo que este
- * archivo cambie; solo qué tan buena idea es dejarlo así a futuro es
- * charla aparte si les interesa revisarlo.
  */
 
 function doPost(e) {
@@ -89,12 +78,14 @@ function validarYRegistrarAsistencia_(folio, deviceId) {
   return { result: result, full_name: fullName };
 }
 
-// Usa el índice cacheado (CacheParticipantes.gs) en vez de releer toda la
-// hoja Participantes en cada escaneo. getParticipantesIndexCached_ ya se
-// encarga de reconstruir el índice desde la hoja solo cuando el caché
-// está vacío o fue invalidado (ver invalidateParticipantesCache_, que se
-// llama desde Gafetes.gs cada vez que se crea/actualiza un participante).
-// Devuelve { folio, full_name, status } o null si no existe ese folio.
+/**
+ * Usa el índice cacheado (CacheParticipantes.gs) en vez de releer toda la
+ * hoja Participantes en cada escaneo. getParticipantesIndexCached_ ya se
+ * encarga de reconstruir el índice desde la hoja solo cuando el caché
+ * está vacío o fue invalidado (ver invalidateParticipantesCache_, que se
+ * llama desde Gafetes.gs cada vez que se crea/actualiza un participante).
+ * Devuelve { folio, full_name, status } o null si no existe ese folio.
+**/
 function buscarPorFolio_(sheet, folio) {
   const index = getParticipantesIndexCached_(sheet);
   for (let i = 0; i < index.length; i++) {

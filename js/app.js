@@ -50,7 +50,7 @@ function init() {
   if (savedDevice && savedApiUrl) {
     els.deviceBadge.textContent = savedDevice;
     showScreen("scan");
-      startCamera();
+    startCamera();
   } else {
     els.deviceSelect.value = savedDevice || "";
     els.apiUrlInput.value = savedApiUrl || "";
@@ -113,11 +113,7 @@ function onSetupSubmit(e) {
 function showScreen(name) {
   els.setupScreen.classList.toggle("hidden", name !== "setup");
   els.scanScreen.classList.toggle("hidden", name !== "scan");
-  if (name === "result") {
-    els.resultScreen.classList.remove("hidden");
-  } else {
-    els.resultScreen.classList.add("hidden");
-  }
+  els.resultScreen.classList.toggle("hidden", name !== "result");
 }
 
 // ---------- Conexión ----------
