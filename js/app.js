@@ -26,8 +26,6 @@ const els = {
   rescanBtn: document.getElementById("rescan-btn"),
 };
 
-const canvasCtx = els.canvas.getContext("2d", { willReadFrequently: true });
-
 let scanning = false;
 let rafId = null;
 let lastToken = null;
@@ -51,7 +49,6 @@ function init() {
   if (savedDevice && savedApiUrl) {
     els.deviceBadge.textContent = savedDevice;
     showScreen("scan");
-    startCamera();
   } else {
     els.deviceSelect.value = savedDevice || "";
     els.apiUrlInput.value = savedApiUrl || "";
@@ -60,7 +57,6 @@ function init() {
 
   els.setupForm.addEventListener("submit", onSetupSubmit);
   els.configBtn.addEventListener("click", () => {
-    stopCamera();
     els.deviceSelect.value = getDeviceId();
     els.apiUrlInput.value = getApiUrl();
     showScreen("setup");
@@ -69,20 +65,8 @@ function init() {
   els.codeInputBtn.addEventListener("click", () => {
     extractCode();
   });
-
-  els.toggleCamBtn.addEventListener("click", () => {
-    els.toggleCamBtn.classList.add("is-active");
-    stopCamera();
-    currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-    startCamera();
-
-    setTimeout(() => {
-      els.toggleCamBtn.classList.remove("is-active");
-    }, 150);
-  });
   els.rescanBtn.addEventListener("click", () => {
     showScreen("scan");
-    startCamera();
   });
 }
 
@@ -113,13 +97,14 @@ function onSetupSubmit(e) {
   setApiUrl(apiUrl);
   els.deviceBadge.textContent = device;
   showScreen("scan");
-  startCamera();
 }
 
 function showScreen(name) {
   els.setupScreen.classList.toggle("hidden", name !== "setup");
   els.scanScreen.classList.toggle("hidden", name !== "scan");
   els.resultScreen.classList.toggle("hidden", name !== "result");
+
+  els.scanHint.textContent="Escribe el folio"
 }
 
 // ---------- Conexión ----------
@@ -132,87 +117,9 @@ function updateConnectionBadge() {
 }
 
 function extractCode() {
-  validateToken(els.codeInput.textContent);
-
+  folio = els.codeInput.value;
+  validateToken(folio);
 }
-// ---------- Cámara y escaneo ----------
-
-// async function startCamera() {
-//   if (typeof jsQR !== "function") {
-//     els.scanHint.textContent =
-//       "No se pudo cargar el lector de QR (revisa la conexión). Reintentando…";
-//     console.error("jsQR no está definido — el script del CDN no cargó.");
-//     setTimeout(startCamera, 3000);
-//     return;
-//   }
-
-//   try {
-//     // Si la cámara es la frontal ('user'), invertimos el video horizontalmente con CSS
-//     if (currentFacingMode === "user") {
-//       els.video.style.transform = "scaleX(-1)";
-//     } else {
-//       els.video.style.transform = "none";
-//     }
-
-//     stream = await navigator.mediaDevices.getUserMedia({
-//       video: { facingMode: currentFacingMode },
-//     });
-//     els.video.srcObject = stream;
-//     await els.video.play();
-//     scanning = true;
-//     els.scanHint.textContent = "Apunta la cámara al código QR del gafete";
-//     rafId = requestAnimationFrame(scanLoop);
-//   } catch (err) {
-//     els.scanHint.textContent =
-//       "No se pudo acceder a la cámara. Revisa permisos y reinicia la app.";
-//     console.error("Camera error:", err);
-//   }
-// }
-
-// function stopCamera() {
-//   scanning = false;
-//   if (rafId) cancelAnimationFrame(rafId);
-//   if (stream) {
-//     stream.getTracks().forEach((t) => t.stop());
-//     stream = null;
-//   }
-// }
-
-// function scanLoop() {
-//   if (!scanning) return;
-
-//   try {
-//     if (els.video.readyState === els.video.HAVE_ENOUGH_DATA) {
-//       els.canvas.width = els.video.videoWidth;
-//       els.canvas.height = els.video.videoHeight;
-//       canvasCtx.drawImage(els.video, 0, 0, els.canvas.width, els.canvas.height);
-//       const imageData = canvasCtx.getImageData(
-//         0,
-//         0,
-//         els.canvas.width,
-//         els.canvas.height
-//       );
-//       const code = jsQR(imageData.data, imageData.width, imageData.height, {
-//         inversionAttempts: "dontInvert",
-//       });
-
-//       if (code && code.data) {
-//         scanning = false;
-//         stopCamera();
-//         validateToken(code.data.trim());
-//         return;
-//       }
-//     }
-//   } catch (err) {
-//     // Un error aquí antes NO se veía: el ciclo simplemente se detenía para
-//     // siempre en el primer cuadro fallido, con la cámara aparentando
-//     // funcionar. Ahora se registra y el ciclo se reintenta en el
-//     // siguiente cuadro en vez de morir.
-//     console.error("Error en scanLoop:", err);
-//   }
-//   rafId = requestAnimationFrame(scanLoop);
-// }
-
 // ---------- Validación contra el API (Apps Script) ----------
 
 async function validateToken(token) {
